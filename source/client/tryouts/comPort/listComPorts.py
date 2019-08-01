@@ -45,7 +45,7 @@ for result in results:
     print(result)
 
 if sys.platform.startswith('win'):
-    #a = os.system("REG QUERY HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM");
+    #a = os.system("REG QUERY HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM")
     a = os.popen("REG QUERY HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM").read()
     print(a)
 else:
