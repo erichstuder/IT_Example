@@ -29,7 +29,7 @@ ax1.grid()
 plt.plot(t, s1)
 ax2 = plt.subplot(212, sharex=ax1)
 ax2.grid()
-#plt.plot(t, 2*s1)
+# plt.plot(t, 2*s1)
 plt.plot([1, 2, 3], [5, 0, 2], '-*')
 
 plt.show()

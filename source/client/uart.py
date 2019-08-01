@@ -19,13 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 import glob
 import serial
-import winreg as reg
-from itertools import count
 import serial.tools
 
 
-
-def connect(args):
+def connect():
     if sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
