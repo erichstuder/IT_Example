@@ -17,6 +17,6 @@
 
 #include "it.h"
 
-void itSetup(){
-	Serial.begin(9600);
+void itSetup(void (*sendStringFunc)(string stringToSend)){
+	sendStringFunc
 }

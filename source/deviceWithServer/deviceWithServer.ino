@@ -15,6 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+//Board: Arduino Leonardo
+
 //enable debugging with IT
 #define IT_ENABLED
 
@@ -26,11 +28,12 @@ boolean timerEvent;
 struct appIn_T appIn;
 struct appOut_T appOut;
 
+enum LedState{
+  On, Off
+};
+
 void setup(){
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, LOW);
-//	Serial.begin(9600);
-	itSetup();
+	setBuiltinLed(LedState.On);
 	setupTimer();
 }
 
@@ -38,22 +41,24 @@ void loop(){
 	if(!timerEvent){
 		return;
 	}
-	#ifdef IT_ENABLED
-		itToClient("timeNow", millis());
-	#endif
-	
+ 
 	timerEvent=false;
 	appIn.millis_ms = millis();
 	appTick(appIn, &appOut);
-/*	while(!Serial && !timerEventPending()){
-		; // wait for serial port to connect. Needed for native USB port only
-	}
-	if(Serial){
-		Serial.println(appIn.millis_ms);
-		Serial.println((long)appOut.squareMillis);
-		Serial.println(appOut.sqrtMillis);	
-		Serial.println("");
-	}*/
+
+  #ifdef IT_ENABLED
+    itToClient("aquareMillis", appOut.squareMillis, millis());
+    itToClient("aquareMillis", appOut.sqrtMillis, millis());
+  #endif
+}
+
+void setBuiltinLed(LedState ledState){
+  pinMode(LED_BUILTIN, OUTPUT);
+  if(ledState == LedState.On){
+    digitalWrite(LED_BUILTIN, LOW);    
+  }else{
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 }
 
 void setupTimer(){

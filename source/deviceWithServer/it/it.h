@@ -18,19 +18,14 @@
 #ifndef IT_H
 #define IT_H
 
+static void (*sendStringFunc)(string stringToSend);
 
-
-inline void itToClient(string str, unsigned long data, boolean (*doneFunc)(void)){
-	if(Serial){
-		Serial.write(str);
-		Serial.print(data);
-		Serial.flush();
-	}else{
-		write to temporal buffer
-	}
+inline void itToClient(string signalName, double data, double timeStamp){
+	sendStringFunc(signalName);
+	sendStringFunc();
 }
 
-inline boolean fromEt(byte buf[], int len){
+/*inline boolean fromClient(byte buf[], int len){
 	if(Serial1.available() >= len+1){
 		if(Serial1.read() == ET_OUTPUT_ID){
 			int n;
@@ -41,23 +36,6 @@ inline boolean fromEt(byte buf[], int len){
 		}
 	}
 	return false;
-}
+}*/
 
-inline boolean syncEt(boolean (*doneFunc)(void)){
-	while(Serial1.available()){
-		Serial1.read();
-	}
-	//digitalWrite(LED_BUILTIN, HIGH);
-	Serial1.write(ET_SYNC_ID);
-	while(!(*doneFunc)()){
-		if(Serial1.available()>0){
-			//digitalWrite(LED_BUILTIN, HIGH);
-			//Serial.println(Serial1.read()==ET_SYNCED_ID);
-			return Serial1.read()==ET_SYNCED_ID;
-		}
-	}
-	//digitalWrite(LED_BUILTIN, LOW);
-	return false;
-}
-
-#endif //ET_H
+#endif //IT_H
