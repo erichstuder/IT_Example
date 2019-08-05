@@ -33,11 +33,11 @@ struct OutBuffer{
 	unsigned int writeIndex;
 };
 
-ItError createTelegram(OutBuffer outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
-ItError appendByteToBuffer(OutBuffer buffer, byte byteToAppend);
-ItError appendCharArrayToBuffer(OutBuffer buffer, const char* array, unsigned int arrayLength);
-ItError appendDoubleToBuffer(OutBuffer buffer, double doubleToAppend);
-void initBuffer(OutBuffer buffer);
+ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
+ItError appendByteToBuffer(OutBuffer* outBuffer, byte byteToAppend);
+ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
+ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
+void initBuffer(OutBuffer* outBuffer);
 void sendError(const char* errMessage, ItError errId);
 
 
@@ -45,22 +45,21 @@ void itSetup(ItError (*writeBytesToClient)(const byte* buf, unsigned int bufLen)
 	writeBytesToClientCallback = writeBytesToClient;	
 }
 
-
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
 	OutBuffer outBuffer;
 	ItError err;
 
-	err = createTelegram(outBuffer, signalName, signalData, timeStampOfSignalData);
+	err = createTelegram(&outBuffer, signalName, signalData, timeStampOfSignalData);
 	if(err == BufferFull){
 		sendError("BufferFull", err);
 	}else if(err != NoError){
 		sendError("Unexpected Error", err);
 	}
 	
-	err = writeBytesToClientCallback(outBuffer.data, outBuffer.writeIndex);
+ 	err = writeBytesToClientCallback(outBuffer.data, outBuffer.writeIndex);
 	if(err == ClientUnavailable){
 		//nothing done at the moment. Possible solution would be to have a buffer to store old telegrams
-	}else if(err = ClientWriteError){
+	}else if(err == ClientWriteError){
 		sendError("ClientWriteError", err);
 		for(;;);//endless loop to stop the program in case we can't send the error to the client
 	}else if(err != NoError){
@@ -69,14 +68,15 @@ void itSendToClient(char* signalName, double signalData, double timeStampOfSigna
 	}
 }
 
-
 void sendError(const char* errMessage, ItError errId){
 	writeBytesToClientCallback(errMessage, strlen(errMessage));
 	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));
 }
 
-
-ItError createTelegram(OutBuffer outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
+//TODO:
+//- CRC
+//- zero terminator at end of signal name string
+ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
 	ItError err;
 	
 	initBuffer(outBuffer);
@@ -99,14 +99,12 @@ ItError createTelegram(OutBuffer outBuffer, char* signalName, double signalData,
 	return NoError;
 }
 
-
-void initBuffer(OutBuffer buffer){
-	buffer.data[0] = TelegramStart;
-	buffer.writeIndex = 2;
+void initBuffer(OutBuffer* outBuffer){
+	outBuffer->data[0] = TelegramStart;
+	outBuffer->writeIndex = 2;
 }
 
-
-ItError appendDoubleToBuffer(OutBuffer outBuffer, double doubleToAppend){
+ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
 	ItError err;
 	
 	union{
@@ -123,8 +121,7 @@ ItError appendDoubleToBuffer(OutBuffer outBuffer, double doubleToAppend){
 	return NoError;
 }
 
-
-ItError appendCharArrayToBuffer(OutBuffer outBuffer, const char* array, unsigned int arrayLength){
+ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
 	ItError err;
 	
 	for(unsigned int idx = 0; idx < arrayLength; idx++){
@@ -136,27 +133,26 @@ ItError appendCharArrayToBuffer(OutBuffer outBuffer, const char* array, unsigned
 	return NoError;
 }
 
-
-ItError appendByteToBuffer(OutBuffer buffer, byte byteToAppend){
+ItError appendByteToBuffer(OutBuffer* outBuffer, byte byteToAppend){
 	ItError err;
 	
-	if(buffer.writeIndex >= sizeof(buffer.data)){
+	if(outBuffer->writeIndex >= sizeof(outBuffer->data)){
 		return BufferFull;
 	}
 	
-	if(byteToAppend == TelegramStart || byteToAppend == ReplacementMarker){
-		buffer.data[buffer.writeIndex] = ReplacementMarker;
-		buffer.writeIndex++;
+	if((byteToAppend == TelegramStart) || (byteToAppend == ReplacementMarker)){
+		outBuffer->data[outBuffer->writeIndex] = ReplacementMarker;
+		outBuffer->writeIndex++;
 		
-		err = appendByteToBuffer(buffer, byteToAppend-1);
+		err = appendByteToBuffer(outBuffer, byteToAppend-1);
 		if(err != NoError){
 			return err;
 		}
 	}else{
-		buffer.data[buffer.writeIndex] = ReplacementMarker;
-		buffer.writeIndex++;
+		outBuffer->data[outBuffer->writeIndex] = byteToAppend;
+		outBuffer->writeIndex++;
 	}
 	
-	buffer.data[1]=buffer.writeIndex;//set telegram length
+	outBuffer->data[1]=outBuffer->writeIndex;//set telegram length
 	return NoError;
 }

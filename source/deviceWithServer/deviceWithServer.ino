@@ -34,7 +34,6 @@ enum LedState{
 };
 
 void setup(){
-	setBuiltinLed(On);
 	timerSetup();
 
 	//debugging infrastructure
@@ -44,8 +43,10 @@ void setup(){
 
 void loop(){
 	if(!timerEvent){
+		setBuiltinLed(Off);
 		return;
 	}
+	setBuiltinLed(On);
  
 	timerEvent=false;
 	appIn.millis_ms = millis();
@@ -60,9 +61,9 @@ void loop(){
 void setBuiltinLed(LedState ledState){
   pinMode(LED_BUILTIN, OUTPUT);
   if(ledState == On){
-    digitalWrite(LED_BUILTIN, LOW);    
+    digitalWrite(LED_BUILTIN, HIGH);    
   }else{
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BUILTIN, LOW);
   }
 }
 
