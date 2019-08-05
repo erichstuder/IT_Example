@@ -18,24 +18,4 @@
 #ifndef IT_H
 #define IT_H
 
-static void (*sendStringFunc)(string stringToSend);
-
-inline void itToClient(string signalName, double data, double timeStamp){
-	sendStringFunc(signalName);
-	sendStringFunc();
-}
-
-/*inline boolean fromClient(byte buf[], int len){
-	if(Serial1.available() >= len+1){
-		if(Serial1.read() == ET_OUTPUT_ID){
-			int n;
-			for(n=0; n<len; n++){
-				buf[n] = Serial1.read();		
-			}
-			return true;
-		}
-	}
-	return false;
-}*/
-
 #endif //IT_H

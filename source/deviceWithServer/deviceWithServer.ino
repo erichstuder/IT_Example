@@ -23,6 +23,7 @@
 #include "app/app.h"
 #include "app/app.cpp"
 #include "it/it.h"
+#include "it/it.cpp"
 
 boolean timerEvent;
 struct appIn_T appIn;
@@ -33,8 +34,12 @@ enum LedState{
 };
 
 void setup(){
-	setBuiltinLed(LedState.On);
-	setupTimer();
+	setBuiltinLed(On);
+	timerSetup();
+
+	//debugging infrastructure
+	Serial.begin(9600);
+	itSetup(writeBytesToUart);
 }
 
 void loop(){
@@ -47,21 +52,21 @@ void loop(){
 	appTick(appIn, &appOut);
 
   #ifdef IT_ENABLED
-    itToClient("aquareMillis", appOut.squareMillis, millis());
-    itToClient("aquareMillis", appOut.sqrtMillis, millis());
+    itSendToClient("squareMillis", appOut.squareMillis, millis());
+    itSendToClient("sqrtMillis", appOut.sqrtMillis, millis());
   #endif
 }
 
 void setBuiltinLed(LedState ledState){
   pinMode(LED_BUILTIN, OUTPUT);
-  if(ledState == LedState.On){
+  if(ledState == On){
     digitalWrite(LED_BUILTIN, LOW);    
   }else{
     digitalWrite(LED_BUILTIN, HIGH);
   }
 }
 
-void setupTimer(){
+void timerSetup(){
 	timerEvent=false;
 	#if APP_SAMPLETIME==1
 		TCCR1A = 0; //for any reason, this must be done!!
@@ -79,4 +84,14 @@ boolean timerEventPending(){
 
 ISR(TIMER1_COMPA_vect){
 	timerEvent=true;
+}
+
+ItError writeBytesToUart(const byte* buf, unsigned int bufLen){
+	if(!Serial){
+		return ClientUnavailable;
+	}
+	if(Serial.write(buf, bufLen) != bufLen){
+		return ClientWriteError;
+	}
+	return NoError;
 }
