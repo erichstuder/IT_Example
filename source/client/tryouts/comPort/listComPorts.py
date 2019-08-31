@@ -87,12 +87,14 @@ if sys.platform.startswith('win'):
 
     deviceParametersKeys = getDeviceParametersKeys(r"SYSTEM\CurrentControlSet\Enum")
 
-    comPortKeys = []
+    comPortKeys = [None]*len(comPorts)
     for key in deviceParametersKeys:
         try:
             keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key + "\\Device Parameters", 0, winreg.KEY_READ)
-            if winreg.QueryValueEx(keyHandle, "PortName")[0] in comPorts:
-                comPortKeys.append(key)
+            portName = winreg.QueryValueEx(keyHandle, "PortName")[0]
+            for i in range(len(comPorts)):
+                if portName == comPorts[i]:
+                    comPortKeys[i] = key
             winreg.CloseKey(keyHandle)
         except OSError as e:
             if str(e) == r"[WinError 259] Es sind keine Daten mehr verfügbar":
