@@ -27,7 +27,7 @@ class State:
     ErrorNoExit = 4
 
 
-comPort = "COM4"
+comPort = "COM8"
 state = State.Connecting
 oldState = State.Init
 while True:
@@ -49,9 +49,14 @@ while True:
             print(">> Reading")
             oldState = state
         try:
-            print(serialPort.read().decode("utf-8"), end='')
+            data = serialPort.read()
+            print(data.decode("utf-8"), end='')
         except serial.serialutil.SerialException as e:
             state = State.Connecting
+        except UnicodeDecodeError:
+            print('')
+            print("Not utf-8: ", end='')
+            print(data)
         except Exception as e:
             state = State.ErrorNoExit
             print("Unexpected exception occurred:")
