@@ -39,8 +39,10 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\deviceWithServer\app\app.cpp" />
     <ClCompile Include="..\..\deviceWithServer\app\controller.cpp" />
     <ClCompile Include="..\..\deviceWithServer\app\plant.cpp" />
+    <ClCompile Include="appTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
     <ClCompile Include="pch.cpp">

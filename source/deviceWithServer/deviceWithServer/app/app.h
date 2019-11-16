@@ -20,15 +20,6 @@
 
 #define APP_SAMPLETIME 1 //s
 
-typedef struct{
-	unsigned long millis_ms;
-}AppIn_T;
-
-typedef struct{
-	unsigned long long squareMillis;
-	float sqrtMillis;
-}AppOut_T;
-
-//extern "C" void appTick(struct appIn_T appIn, struct appOut_T appOut);
+void appTick(void);
 
 #endif //APP_H

@@ -14,6 +14,12 @@
     <ClCompile Include="..\..\deviceWithServer\app\controller.cpp">
       <Filter>controller</Filter>
     </ClCompile>
+    <ClCompile Include="appTest.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deviceWithServer\app\app.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -24,6 +30,9 @@
     </Filter>
     <Filter Include="controller">
       <UniqueIdentifier>{8196770f-a2a6-4c9e-a30d-227f20bc98de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app">
+      <UniqueIdentifier>{d10fd7ce-9024-4553-8fd2-71be743e5827}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

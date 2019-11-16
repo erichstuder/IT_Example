@@ -15,11 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
-#include "app.h"
+//#include <math.h>
+//#include "app.h"
 
-void appTick(AppIn_T appIn, AppOut_T* appOut){
-	unsigned long millis_ms = appIn.millis_ms;
-	appOut->squareMillis = (unsigned long long)millis_ms * (unsigned long long)millis_ms;
-	appOut->sqrtMillis = sqrt(millis_ms);
+void appTick(void) {
 }
