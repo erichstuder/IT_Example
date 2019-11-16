@@ -10,7 +10,9 @@ protected:
 
 	virtual ~PlantTest() {}
 
-	virtual void SetUp() {}
+	virtual void SetUp() {
+		clearDelayBuffer();
+	}
 
 	virtual void TearDown() {
 		clearDelayBuffer();
