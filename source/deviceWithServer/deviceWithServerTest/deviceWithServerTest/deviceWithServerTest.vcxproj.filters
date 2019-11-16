@@ -2,37 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="plantTest.cpp">
-      <Filter>plant</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\deviceWithServer\app\plant.cpp">
-      <Filter>plant</Filter>
-    </ClCompile>
-    <ClCompile Include="controllerTest.cpp">
-      <Filter>controller</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\deviceWithServer\app\controller.cpp">
-      <Filter>controller</Filter>
-    </ClCompile>
-    <ClCompile Include="appTest.cpp">
-      <Filter>app</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\deviceWithServer\app\app.cpp">
-      <Filter>app</Filter>
-    </ClCompile>
+    <ClCompile Include="controllerTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\app\controller.cpp" />
+    <ClCompile Include="appTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\app\app.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\app\plant.cpp" />
+    <ClCompile Include="plantTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\app\squareWave.cpp" />
+    <ClCompile Include="squareWaveTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="plant">
-      <UniqueIdentifier>{0701bd3d-a3a5-4af1-9bcf-7e88831ee36d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="controller">
-      <UniqueIdentifier>{8196770f-a2a6-4c9e-a30d-227f20bc98de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="app">
-      <UniqueIdentifier>{d10fd7ce-9024-4553-8fd2-71be743e5827}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>

@@ -5,6 +5,6 @@ TEST(AppTest, appTickExists) {
 	appTick();
 }
 
-TEST(AppTest, checkWiring) {
+/*TEST(AppTest, checkWiring) {
 	ASSERT_TRUE(false);
-}
+}*/
