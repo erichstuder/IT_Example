@@ -15,20 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef APP_H
-#define APP_H
+#ifndef PLANT_H
+#define PLANT_H
 
-#define APP_SAMPLETIME 1 //s
+void plantTick(void);
+void setPlantIn(float value);
+float getPlantOut(void);
 
-struct appIn_T{
-	unsigned long millis_ms;
-};
-
-struct appOut_T{
-	unsigned long long squareMillis;
-	float sqrtMillis;
-};
-
-//extern "C" void appTick(struct appIn_T appIn, struct appOut_T appOut);
-
-#endif //APP_H
+#endif

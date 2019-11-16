@@ -15,11 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
-#include "app.h"
+const int DelayLength = 10;
+float delay[DelayLength] = { 0.0f };
+float plantIn, plantOut;
 
-extern "C" void appTick(struct appIn_T appIn, struct appOut_T* appOut){
-	unsigned long millis_ms = appIn.millis_ms;
-	appOut->squareMillis = (unsigned long long)millis_ms * (unsigned long long)millis_ms;
-	appOut->sqrtMillis = sqrt(millis_ms);
+void plantTick(void){
+	plantOut = delay[DelayLength-1];
+	int n;
+	for(n=DelayLength-1; n>0; n--){
+		delay[n] = delay[n-1];
+	}
+	delay[0] = plantIn;
+}
+
+void setPlantIn(float value){
+	plantIn = value;
+}
+
+float getPlantOut(void){
+	return plantOut;
 }

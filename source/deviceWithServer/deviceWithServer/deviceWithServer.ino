@@ -26,14 +26,10 @@
 #include "it/it.cpp"
 
 boolean timerEvent;
-struct appIn_T appIn;
-struct appOut_T appOut;
+AppIn_T appIn;
+AppOut_T appOut;
 
-enum LedState{
-  On, Off
-};
-
-void setup(){
+void setup(void){
 	timerSetup();
 
 	//debugging infrastructure
@@ -41,12 +37,12 @@ void setup(){
 	itSetup(writeBytesToUart);
 }
 
-void loop(){
+void loop(void){
 	if(!timerEvent){
-		setBuiltinLed(Off);
+		setBuiltinLedOff();
 		return;
 	}
-	setBuiltinLed(On);
+	setBuiltinLedOn();
  
 	timerEvent=false;
 	appIn.millis_ms = millis();
@@ -58,16 +54,17 @@ void loop(){
   #endif
 }
 
-void setBuiltinLed(LedState ledState){
+void setBuiltinLedOn(void){
   pinMode(LED_BUILTIN, OUTPUT);
-  if(ledState == On){
-    digitalWrite(LED_BUILTIN, HIGH);    
-  }else{
-    digitalWrite(LED_BUILTIN, LOW);
-  }
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
-void timerSetup(){
+void setBuiltinLedOff(void){
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+}
+
+void timerSetup(void){
 	timerEvent=false;
 	#if APP_SAMPLETIME==1
 		TCCR1A = 0; //for any reason, this must be done!!
@@ -79,7 +76,7 @@ void timerSetup(){
 	#endif
 }
 
-boolean timerEventPending(){
+boolean timerEventPending(void){
 	return timerEvent;
 }
 
