@@ -19,9 +19,10 @@
 #define SQUAREWAVE_H
 
 void squareWaveTick(void);
+void squareWaveReset(void);
 float getSquareWaveSignal(void);
 void setSquareWaveTickTime(float time);
 void setSquareWaveFrequency(float signalFrequency);
-void setSquareWaveAmplitude(float signalAmplitude);
+void setSquareWaveLevels(float signalLevel1, float signalLevel2);
 
 #endif
