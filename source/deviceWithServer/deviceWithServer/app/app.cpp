@@ -15,8 +15,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//#include <math.h>
-//#include "app.h"
+#include "app.h"
+#include "squareWave.h"
+#include "controller.h"
+#include "plant.h"
+
+void appInit(void) {
+	setSquareWaveTickTime(1e-3);
+	setSquareWaveFrequency(0.2);
+	setSquareWaveLevels(2, 10);
+
+	setControllerKp(1);
+	setControllerKi(1);
+}
 
 void appTick(void) {
+	setControllerDesiredValue( getSquareWaveSignal() );
+	setControllerActualValue( getPlantOut() );
+	setPlantIn( getControllerSignal() );
+
+	squareWaveTick();
+	controllerTick();
+	plantTick();
 }

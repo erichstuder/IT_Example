@@ -18,8 +18,8 @@
 #ifndef PLANT_H
 #define PLANT_H
 
-void plantTick(void);
-void setPlantIn(float value);
-float getPlantOut(void);
+extern void (*plantTick)(void);
+extern void (*setPlantIn)(float value);
+extern float (*getPlantOut)(void);
 
 #endif

@@ -20,6 +20,7 @@
 
 #define APP_SAMPLETIME 1 //s
 
+void appInit(void);
 void appTick(void);
 
 #endif //APP_H

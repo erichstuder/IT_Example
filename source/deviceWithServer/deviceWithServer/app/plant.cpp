@@ -15,11 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const int DelayLength = 10;
-float delay[DelayLength] = { 0.0f };
-float plantIn, plantOut;
+#include "plant.h"
 
-void plantTick(void){
+static const int DelayLength = 10;
+static float delay[DelayLength] = { 0.0f };
+static float plantIn, plantOut;
+
+void plantTick_Implementation(void){
 	plantOut = delay[DelayLength-1];
 	int n;
 	for(n=DelayLength-1; n>0; n--){
@@ -27,11 +29,14 @@ void plantTick(void){
 	}
 	delay[0] = plantIn;
 }
+void (*plantTick)(void) = plantTick_Implementation;
 
-void setPlantIn(float value){
+void setPlantIn_Implementation(float value){
 	plantIn = value;
 }
+void (*setPlantIn)(float value) = setPlantIn_Implementation;
 
-float getPlantOut(void){
+float getPlantOut_Implementation(void){
 	return plantOut;
 }
+float (*getPlantOut)(void) = getPlantOut_Implementation;

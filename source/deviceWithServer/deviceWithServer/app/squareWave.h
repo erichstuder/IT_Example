@@ -18,11 +18,11 @@
 #ifndef SQUAREWAVE_H
 #define SQUAREWAVE_H
 
-void squareWaveTick(void);
+extern void (*squareWaveTick)(void);
 void squareWaveReset(void);
-float getSquareWaveSignal(void);
-void setSquareWaveTickTime(float time);
-void setSquareWaveFrequency(float signalFrequency);
-void setSquareWaveLevels(float signalLevel1, float signalLevel2);
+extern float (*getSquareWaveSignal)(void);
+extern void (*setSquareWaveTickTime)(float time);
+extern void (*setSquareWaveFrequency)(float signalFrequency);
+extern void (*setSquareWaveLevels)(float signalLevel1, float signalLevel2);
 
 #endif

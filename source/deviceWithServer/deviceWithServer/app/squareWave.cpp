@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "squareWave.h"
 #include "math.h"
 
 static float tickTime = 0;
@@ -27,10 +28,11 @@ static float* outputSignal = 0;
 static void driveOutputSignal(void);
 static void toggleOutputSignal(void);
 
-void squareWaveTick(void) {
+void squareWaveTick_Implementation(void) {
 	unsigned short ticksUntilToggle;
 	driveOutputSignal();
 }
+void (*squareWaveTick)(void) = squareWaveTick_Implementation;
 
 void squareWaveReset(void) {
 	currentTicks = 0;
@@ -58,20 +60,24 @@ static void toggleOutputSignal(void) {
 	}
 }
 
-float getSquareWaveSignal(void) {
+float getSquareWaveSignal_Implementation(void) {
 	return *outputSignal;
 }
+float (*getSquareWaveSignal)(void) = getSquareWaveSignal_Implementation;
 
-void setSquareWaveTickTime(float time) {
+void setSquareWaveTickTime_Implementation(float time) {
 	tickTime = time;
 }
+void (*setSquareWaveTickTime)(float time) = setSquareWaveTickTime_Implementation;
 
-void setSquareWaveFrequency(float signalFrequency) {
+void setSquareWaveFrequency_Implementation(float signalFrequency) {
 	frequency = signalFrequency;
 }
+void (*setSquareWaveFrequency)(float signalFrequency) = setSquareWaveFrequency_Implementation;
 
-void setSquareWaveLevels(float signalLevel1, float signalLevel2) {
+void setSquareWaveLevels_Implementation(float signalLevel1, float signalLevel2) {
 	level1 = signalLevel1;
 	level2 = signalLevel2;
 }
+void (*setSquareWaveLevels)(float signalLevel1, float signalLevel2) = setSquareWaveLevels_Implementation;
  

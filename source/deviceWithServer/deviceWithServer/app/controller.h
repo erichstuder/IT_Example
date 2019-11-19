@@ -18,14 +18,12 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-void controllerTick(void);
+extern void (*controllerTick)(void);
 void controllerReset(void);
-void setControllerDesiredValue(float value);
-void setControllerActualValue(float value);
-void setControllerKp(float value);
-void setControllerKi(float value);
-
-float getControllerSignal(void);
-
+extern void (*setControllerDesiredValue)(float value);
+extern void (*setControllerActualValue)(float value);
+extern void (*setControllerKp)(float value);
+extern void (*setControllerKi)(float value);
+extern float (*getControllerSignal)(void);
 
 #endif
