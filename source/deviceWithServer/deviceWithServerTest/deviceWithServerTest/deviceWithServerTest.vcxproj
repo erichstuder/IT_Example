@@ -33,16 +33,16 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)..\..\deviceWithServer\app;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\deviceWithServer\app\app.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\app\controller.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\app\plant.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\app\squareWave.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\app.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
     <ClCompile Include="plantTest.cpp" />

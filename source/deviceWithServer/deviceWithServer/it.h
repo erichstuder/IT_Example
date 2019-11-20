@@ -18,4 +18,13 @@
 #ifndef IT_H
 #define IT_H
 
+typedef enum{
+	NoError,
+	BufferFull,
+	ClientUnavailable,
+	ClientWriteError
+}ItError_t;
+
+void itSetup(ItError_t (*writeBytesToClient)(const unsigned char* buf, unsigned int bufLen));
+
 #endif //IT_H

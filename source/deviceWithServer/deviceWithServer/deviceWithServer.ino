@@ -17,17 +17,22 @@
 
 //Board: Arduino Leonardo
 
-//enable debugging with IT
-#define IT_ENABLED
-
-#include "app/app.h"
-#include "app/app.cpp"
-#include "it/it.h"
-#include "it/it.cpp"
+#include "squareWave.h"
+//#include "app/squareWave.cpp"
+#include "controller.h"
+//#include "app/controller.cpp"
+#include "plant.h"
+//#include "app/plant.cpp"
+#include "app.h"
+//#include "app/app.cpp"
+#include "it.h"
+//#include "it/it.cpp"
 
 boolean timerEvent;
-AppIn_T appIn;
-AppOut_T appOut;
+//AppIn_T appIn;
+//AppOut_T appOut;
+
+ItError_t writeBytesToUart(const byte* buf, unsigned int bufLen);
 
 void setup(void){
 	timerSetup();
@@ -45,9 +50,10 @@ void loop(void){
 	setBuiltinLedOn();
  
 	timerEvent=false;
-	appIn.millis_ms = millis();
-	appTick(appIn, &appOut);
-
+//	appIn.millis_ms = millis();
+//	appTick(appIn, &appOut);
+  appTick();
+  
   #ifdef IT_ENABLED
     itSendToClient("squareMillis", appOut.squareMillis, millis());
     itSendToClient("sqrtMillis", appOut.sqrtMillis, millis());
@@ -84,7 +90,7 @@ ISR(TIMER1_COMPA_vect){
 	timerEvent=true;
 }
 
-ItError writeBytesToUart(const byte* buf, unsigned int bufLen){
+ItError_t writeBytesToUart(const unsigned char* buf, unsigned int bufLen){
 	if(!Serial){
 		return ClientUnavailable;
 	}

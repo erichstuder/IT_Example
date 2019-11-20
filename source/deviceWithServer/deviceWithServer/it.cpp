@@ -12,42 +12,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
 #include "it.h"
 
-enum ItError{
-	NoError,
-	BufferFull,
-	ClientUnavailable,
-	ClientWriteError
-};
-
-const byte TelegramStart = 0xAA;
-const byte ReplacementMarker = 0xBB;
-static ItError (*writeBytesToClientCallback)(const byte* buf, unsigned int bufLen);
+const unsigned char TelegramStart = 0xAA;
+const unsigned char ReplacementMarker = 0xBB;
+static ItError_t (*writeBytesToClientCallback)(const unsigned char* buf, unsigned int bufLen);
 
 struct OutBuffer{
-	byte data[255];
+	unsigned char data[255];
 	unsigned int writeIndex;
 };
 
-ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
-ItError appendByteToBuffer(OutBuffer* outBuffer, byte byteToAppend);
-ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
-ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
+ItError_t createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
+ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
+ItError_t appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
+ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
 void initBuffer(OutBuffer* outBuffer);
-void sendError(const char* errMessage, ItError errId);
+void sendError(const char* errMessage, ItError_t errId);
 
 
-void itSetup(ItError (*writeBytesToClient)(const byte* buf, unsigned int bufLen)){
+void itSetup(ItError_t (*writeBytesToClient)(const unsigned char* buf, unsigned int bufLen)){
 	writeBytesToClientCallback = writeBytesToClient;	
 }
 
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
 	OutBuffer outBuffer;
-	ItError err;
+	ItError_t err;
 
 	err = createTelegram(&outBuffer, signalName, signalData, timeStampOfSignalData);
 	if(err == BufferFull){
@@ -68,16 +61,18 @@ void itSendToClient(char* signalName, double signalData, double timeStampOfSigna
 	}
 }
 
-void sendError(const char* errMessage, ItError errId){
-	writeBytesToClientCallback(errMessage, strlen(errMessage));
-	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));
+void sendError(const char* errMessage, ItError_t errId){
+  /*TODO: comment in again
+  writeBytesToClientCallback(errMessage, strlen(errMessage));
+	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));*/
 }
 
 //TODO:
 //- CRC
 //- zero terminator at end of signal name string
-ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
-	ItError err;
+ItError_t createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
+	/*TODO: comment in again
+	ItError_t err;
 	
 	initBuffer(outBuffer);
 
@@ -94,7 +89,7 @@ ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData
 	err = appendDoubleToBuffer(outBuffer, timeStampOfSignalData);
 	if(err != NoError){
 		return err;
-	}
+	}*/
 
 	return NoError;
 }
@@ -104,12 +99,12 @@ void initBuffer(OutBuffer* outBuffer){
 	outBuffer->writeIndex = 2;
 }
 
-ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
-	ItError err;
+ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
+	ItError_t err;
 	
 	union{
 		double doubleValue;
-		byte byteArray[sizeof(doubleValue)];
+		unsigned char byteArray[sizeof(doubleValue)];
 	}doubleToByteArray;
 	doubleToByteArray.doubleValue = doubleToAppend;
 	
@@ -121,8 +116,8 @@ ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
 	return NoError;
 }
 
-ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
-	ItError err;
+ItError_t appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
+	ItError_t err;
 	
 	for(unsigned int idx = 0; idx < arrayLength; idx++){
 		err = appendByteToBuffer(outBuffer, array[idx]);
@@ -133,8 +128,8 @@ ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigne
 	return NoError;
 }
 
-ItError appendByteToBuffer(OutBuffer* outBuffer, byte byteToAppend){
-	ItError err;
+ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
+	ItError_t err;
 	
 	if(outBuffer->writeIndex >= sizeof(outBuffer->data)){
 		return BufferFull;
