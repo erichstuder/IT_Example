@@ -47,12 +47,12 @@ void loop(void){
 	timerEvent=false;
 //	appIn.millis_ms = millis();
 //	appTick(appIn, &appOut);
-  appTick();
-  
-  #ifdef IT_ENABLED
-    itSendToClient("squareMillis", appOut.squareMillis, millis());
-    itSendToClient("sqrtMillis", appOut.sqrtMillis, millis());
-  #endif
+    appTick();
+
+    #ifdef IT_ENABLED
+        itSendToClient("squareMillis", appOut.squareMillis, millis());
+        itSendToClient("sqrtMillis", appOut.sqrtMillis, millis());
+    #endif
 }
 
 void setBuiltinLedOn(void){
@@ -72,6 +72,11 @@ void timerSetup(void){
 		TCCR1B = _BV(WGM12) | _BV(CS12) | _BV(CS10); //match on value of OCR1A and divide clock by 1024
 		OCR1A = 15625; //1000ms
 		TIMSK1 = _BV(OCIE1A); //enable interrupt
+	/*#elif APP_SAMPLETIME == 1e-3
+		TCCR1A = 0;
+		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
+		OCR1A = 16000; //1ms
+		TIMSK1 = _BV(OCIE1A); //enable interrupt*/
 	#else
 		#error APP_SAMPLETIME not supported
 	#endif
