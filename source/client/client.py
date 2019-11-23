@@ -17,15 +17,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import time
+import serial  # install pyserial to gain access
 import sys
 from ComPortReceiver import ComPortReceiver
 
 
 def handleComPortInput(data):
-    print(data, end='')
+    try:
+        print(data.decode("utf-8"), end='')
+    except UnicodeDecodeError:
+        print('')
+        print("Not utf-8: ", end='')
+        print(data)
 
 
-comPortReceiver = ComPortReceiver(port='COM6', baudrate=9600, onReceiveCallback=handleComPortInput)
+comPortReceiver = ComPortReceiver(port='COM6', baudrate=9600)
+comPortReceiver.setOnConnecting(lambda: print('comPortReceiver connecting'))
+comPortReceiver.setOnConnected(lambda: print('comPortReceiver connected'))
+comPortReceiver.setOnReceived(handleComPortInput)
+comPortReceiver.setOnError(lambda e: print('comPortReceiver error: ' + e))
+comPortReceiver.setOnErrorNoExit(lambda: print('comPortReceiver errorNoExit'))
+comPortReceiver.start()
 while True:
     cmd = input()
     if cmd == 'exit':
@@ -34,6 +46,9 @@ while True:
         time.sleep(2)
         break
     else:
+        # serialPort = serial.Serial(port='COM6', exclusive=False)
+        # serialPort.baudrate = 9600
+        # serialPort.write(cmd)
         print(cmd)
 
     """

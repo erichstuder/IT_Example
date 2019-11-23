@@ -28,51 +28,65 @@ class ComPortReceiverState:
     ErrorNoExit = 4
 
 
-def comPortReceiverWorker(port, baudrate, onReceiveCallback):
-    state = ComPortReceiverState.Connecting
-    oldState = ComPortReceiverState.Stopped
-    serialPort = None
-    data = None
-    while True:
-        if state == ComPortReceiverState.Connecting:
-            if oldState != state:
-                print(">> Connecting")
-                oldState = state
-            try:
-                serialPort = serial.Serial(port)
-                serialPort.baudrate = baudrate
-                state = ComPortReceiverState.Reading
-            except serial.serialutil.SerialException as e:
-                time.sleep(1)
-            except Exception as e:
-                state = ComPortReceiverState.ErrorNoExit
-                print("Unexpected exception occurred: ")
-                print(e)
-        elif state == ComPortReceiverState.Reading:
-            if oldState != state:
-                print(">> Reading")
-                oldState = state
-            try:
-                data = serialPort.read()
-                # print(data.decode("utf-8"), end='')
-                onReceiveCallback(data.decode("utf-8"))
-            except serial.serialutil.SerialException as e:
-                state = ComPortReceiverState.Connecting
-            except UnicodeDecodeError:
-                print('')
-                print("Not utf-8: ", end='')
-                print(data)
-            except Exception as e:
-                state = ComPortReceiverState.ErrorNoExit
-                print("Unexpected exception occurred: ")
-                print(e)
-        elif state == ComPortReceiverState.ErrorNoExit:
-            if oldState != state:
-                print(">> ErrorNoExit")
-                oldState = state
-
-
 class ComPortReceiver:
-    def __init__(self, port, baudrate, onReceiveCallback):
-        t = threading.Thread(target=comPortReceiverWorker, args=(port, baudrate, onReceiveCallback))
-        t.start()
+    def __init__(self, port, baudrate):
+        self.t = threading.Thread(target=self.__comPortReceiverWorker, args=(port, baudrate))
+        self.__onConnecting = None
+        self.__onConnected = None
+        self.__onDataReceived = None
+        self.__onError = None
+        self.__onErrorNoExit = None
+
+    def start(self):
+        self.t.start()
+
+    def setOnConnecting(self, onConnecting):
+        self.__onConnecting = onConnecting
+
+    def setOnConnected(self, onConnected):
+        self.__onConnected = onConnected
+
+    def setOnReceived(self, onDataReceived):
+        self.__onDataReceived = onDataReceived
+
+    def setOnError(self, onError):
+        self.__onError = onError
+
+    def setOnErrorNoExit(self, onErrorNoExit):
+        self.__onErrorNoExit = onErrorNoExit
+
+    def __comPortReceiverWorker(self, port, baudrate):
+        state = ComPortReceiverState.Connecting
+        oldState = ComPortReceiverState.Stopped
+        serialPort = None
+        while True:
+            if state == ComPortReceiverState.Connecting:
+                if oldState != state:
+                    self.__onConnecting()
+                    oldState = state
+                try:
+                    serialPort = serial.Serial(port=port)
+                    serialPort.baudrate = baudrate
+                    state = ComPortReceiverState.Reading
+                except serial.serialutil.SerialException as e:
+                    time.sleep(1)
+                except Exception as e:
+                    state = ComPortReceiverState.ErrorNoExit
+                    self.__onError(e)
+            elif state == ComPortReceiverState.Reading:
+                if oldState != state:
+                    self.__onConnected()
+                    oldState = state
+                try:
+                    data = serialPort.read()
+                    self.__onDataReceived(data)
+                except serial.serialutil.SerialException as e:
+                    state = ComPortReceiverState.Connecting
+                except Exception as e:
+                    state = ComPortReceiverState.ErrorNoExit
+                    self.__onError(e)
+            elif state == ComPortReceiverState.ErrorNoExit:
+                if oldState != state:
+                    self.__onErrorNoExit()
+                    print(">> ErrorNoExit")
+                    oldState = state
