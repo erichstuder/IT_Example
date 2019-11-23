@@ -20,7 +20,7 @@ import serial  # install pyserial to gain access
 import time
 import datetime
 
-comPort = "COM16"
+comPort = "COM6"
 serialPort = serial.Serial(comPort)
 serialPort.baudrate = 38400
 

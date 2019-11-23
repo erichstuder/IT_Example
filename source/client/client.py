@@ -19,9 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import time
 import serial  # install pyserial to gain access
 import sys
-from ComPortReceiver import ComPortReceiver
+import queue
+from ComPortHandler import ComPortHandler
+import threading
 
-
+"""
 def handleComPortInput(data):
     try:
         print(data.decode("utf-8"), end='')
@@ -29,8 +31,17 @@ def handleComPortInput(data):
         print('')
         print("Not utf-8: ", end='')
         print(data)
+"""
 
 
+def __inputReaderWorker():
+    while True:
+        inputQueue.put(input())
+
+
+inputQueue = queue.Queue()
+
+"""
 comPortReceiver = ComPortReceiver(port='COM6', baudrate=9600)
 comPortReceiver.setOnConnecting(lambda: print('comPortReceiver connecting'))
 comPortReceiver.setOnConnected(lambda: print('comPortReceiver connected'))
@@ -38,7 +49,18 @@ comPortReceiver.setOnReceived(handleComPortInput)
 comPortReceiver.setOnError(lambda e: print('comPortReceiver error: ' + e))
 comPortReceiver.setOnErrorNoExit(lambda: print('comPortReceiver errorNoExit'))
 comPortReceiver.start()
+"""
+threading.Thread(target=__inputReaderWorker).start()
+comPortHandler = ComPortHandler(port='COM6', baudrate=9600)
 while True:
+    while not inputQueue.empty():
+        inputData = inputQueue.get(block=False)
+        print(inputData)
+        comPortHandler.write(inputData)
+    print(comPortHandler.read().decode('utf-8'), end='')
+    time.sleep(0.01)
+
+    """
     cmd = input()
     if cmd == 'exit':
         print('goodbye ...')
@@ -50,6 +72,7 @@ while True:
         # serialPort.baudrate = 9600
         # serialPort.write(cmd)
         print(cmd)
+    """
 
     """
     elif cmd == 'status':
