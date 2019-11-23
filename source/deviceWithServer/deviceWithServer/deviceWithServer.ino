@@ -24,6 +24,7 @@
 #include "it.h"
 
 boolean timerEvent;
+unsigned char cnt = 0;
 //AppIn_T appIn;
 //AppOut_T appOut;
 
@@ -42,6 +43,14 @@ void loop(void){
 		setBuiltinLedOff();
 		return;
 	}
+
+	if(cnt < 5){
+		cnt++;
+	}else{
+		cnt = 0;
+		Serial.println("5s timerEvent");
+	}
+	
 	setBuiltinLedOn();
  
 	timerEvent=false;

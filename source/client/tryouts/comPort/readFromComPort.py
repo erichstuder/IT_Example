@@ -42,7 +42,7 @@ while True:
             time.sleep(1)
         except Exception as e:
             state = State.ErrorNoExit
-            print("Unexpected exception occurred:")
+            print("Unexpected exception occurred: ")
             print(e)
     elif state == State.Reading:
         if oldState != state:
@@ -59,7 +59,7 @@ while True:
             print(data)
         except Exception as e:
             state = State.ErrorNoExit
-            print("Unexpected exception occurred:")
+            print("Unexpected exception occurred: ")
             print(e)
     elif state == State.ErrorNoExit:
         if oldState != state:

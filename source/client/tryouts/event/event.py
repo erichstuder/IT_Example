@@ -16,33 +16,18 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import threading
 import time
-import sys
-from ComPortReceiver import ComPortReceiver
 
 
-def handleComPortInput(data):
-    print(data, end='')
+def worker():
+    while True:
+        cmd = input()
+        print(cmd)
 
 
-comPortReceiver = ComPortReceiver(port='COM6', baudrate=9600, onReceiveCallback=handleComPortInput)
+t = threading.Thread(target=worker)
+t.start()
 while True:
-    cmd = input()
-    if cmd == 'exit':
-        print('goodbye ...')
-        sys.stdout.flush()
-        time.sleep(2)
-        break
-    else:
-        print(cmd)
-
-    """
-    elif cmd == 'status':
-        print('status not yet implemented')
-    elif cmd == 'start':
-        print('start not yet implemented')
-    elif cmd == 'stop':
-        print('stop not yet implemented')
-    else:
-        print(cmd)
-    """
+    print('Hello')
+    time.sleep(10)
