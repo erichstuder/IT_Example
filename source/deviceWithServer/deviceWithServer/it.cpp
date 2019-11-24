@@ -19,7 +19,9 @@
 
 const unsigned char TelegramStart = 0xAA;
 const unsigned char ReplacementMarker = 0xBB;
-static ItError_t (*writeBytesToClientCallback)(const unsigned char* buf, unsigned int bufLen);
+static WriteBytesToClient_t writeBytesToClient;
+static ReadByteFromClient_t readByteFromClient;
+static InputHandler_t inputHandler;
 
 struct OutBuffer{
 	unsigned char data[255];
@@ -33,9 +35,20 @@ ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
 void initBuffer(OutBuffer* outBuffer);
 void sendError(const char* errMessage, ItError_t errId);
 
+void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, InputHandler_t inputHandlerCallback){
+	writeBytesToClient = writeBytesToClientCallback;
+	readByteFromClient = readByteFromClientCallback;
+	inputHandler = inputHandlerCallback;	
+}
 
-void itSetup(ItError_t (*writeBytesToClient)(const unsigned char* buf, unsigned int bufLen)){
-	writeBytesToClientCallback = writeBytesToClient;	
+void itTick(void){
+	double result;
+	char dataByte;
+	ItError_t err;
+	while((err = readByteFromClient(dataByte)) == NoError){
+		inputHandler(dataByte, &result);//TODO: error abfangen
+	}
+	
 }
 
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
@@ -49,7 +62,7 @@ void itSendToClient(char* signalName, double signalData, double timeStampOfSigna
 		sendError("Unexpected Error", err);
 	}
 	
- 	err = writeBytesToClientCallback(outBuffer.data, outBuffer.writeIndex);
+ 	err = writeBytesToClient(outBuffer.data, outBuffer.writeIndex);
 	if(err == ClientUnavailable){
 		//nothing done at the moment. Possible solution would be to have a buffer to store old telegrams
 	}else if(err == ClientWriteError){
@@ -62,8 +75,8 @@ void itSendToClient(char* signalName, double signalData, double timeStampOfSigna
 }
 
 void sendError(const char* errMessage, ItError_t errId){
-  /*TODO: comment in again
-  writeBytesToClientCallback(errMessage, strlen(errMessage));
+  	/*TODO: comment in again
+  	writeBytesToClientCallback(errMessage, strlen(errMessage));
 	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));*/
 }
 

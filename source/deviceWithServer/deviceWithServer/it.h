@@ -22,9 +22,16 @@ typedef enum{
 	NoError,
 	BufferFull,
 	ClientUnavailable,
-	ClientWriteError
+	ClientWriteError,
+	NoDataAvailable,
+	InvalidCommand,
 }ItError_t;
 
-void itSetup(ItError_t (*writeBytesToClient)(const unsigned char* buf, unsigned int bufLen));
+typedef ItError_t (*WriteBytesToClient_t)(const char* const byteArray, const unsigned int byteCount);
+typedef ItError_t (*ReadByteFromClient_t)(char* const data);
+typedef ItError_t (*InputHandler_t)(const char* const dataIn, double* result);
+void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, InputHandler_t inputHandlerCallback);
+
+void itTick(void);
 
 #endif //IT_H

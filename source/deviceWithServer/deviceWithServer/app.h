@@ -19,8 +19,11 @@
 #define APP_H
 
 #define APP_SAMPLETIME 1 //s
+#define IT_CMD_BUFFER_SIZE 20
 
-void appInit(void);
+#include "it.h"
+
+void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readByteFromClient);
 void appTick(void);
 
 #endif //APP_H

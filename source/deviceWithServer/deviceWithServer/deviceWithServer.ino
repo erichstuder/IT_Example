@@ -28,14 +28,15 @@ unsigned char cnt = 0;
 //AppIn_T appIn;
 //AppOut_T appOut;
 
-ItError_t writeBytesToUart(const byte* buf, unsigned int bufLen);
+ItError_t writeBytesToUart(const unsigned char* const byteArray, const unsigned int byteCount);
+ItError_t readByteFromUart(unsigned char* const data);
 
 void setup(void){
 	timerSetup();
 
 	//debugging infrastructure
 	Serial.begin(9600);
-	itSetup(writeBytesToUart);
+	appInit(writeBytesToUart, readByteFromUart);
 }
 
 void loop(void){
@@ -44,7 +45,7 @@ void loop(void){
 		return;
 	}
 
-	if(cnt < 5){
+	if(cnt < 5){//debug
 		cnt++;
 	}else{
 		cnt = 0;
@@ -91,20 +92,28 @@ void timerSetup(void){
 	#endif
 }
 
-boolean timerEventPending(void){
-	return timerEvent;
-}
-
 ISR(TIMER1_COMPA_vect){
-	timerEvent=true;
+	timerEvent = true;
 }
 
-ItError_t writeBytesToUart(const unsigned char* buf, unsigned int bufLen){
+ItError_t writeBytesToUart(const char* const byteArray, const unsigned int byteCount){
 	if(!Serial){
 		return ClientUnavailable;
 	}
-	if(Serial.write(buf, bufLen) != bufLen){
+	if(Serial.write(byteArray, byteCount) != byteCount){
 		return ClientWriteError;
+	}
+	return NoError;
+}
+
+ItError_t readByteFromUart(char* const data){
+	if(!Serial){ //TODO: brauchts das?
+		return ClientUnavailable;
+	}
+	if(Serial.available() > 0){
+		*data = (unsigned char) Serial.read();
+	}else{
+		return NoDataAvailable;
 	}
 	return NoError;
 }

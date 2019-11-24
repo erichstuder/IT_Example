@@ -14,22 +14,32 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <string.h>
 
 #include "app.h"
 #include "squareWave.h"
 #include "controller.h"
 #include "plant.h"
+#include "it.h"
 
-void appInit(void) {
+static char itCmdBuffer[IT_CMD_BUFFER_SIZE];
+static unsigned char itCmdBufferIndex = 0;
+static bool itCmdBufferFull = false;
+
+static ItError_t itHandler(const char letter, double* result);
+
+void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readByteFromClient){
 	setSquareWaveTickTime(1e-3);
 	setSquareWaveFrequency(0.2);
 	setSquareWaveLevels(2, 10);
 
 	setControllerKp(1);
 	setControllerKi(1);
+
+	itInit(writeBytesToClient, readByteFromClient, itHandler);
 }
 
-void appTick(void) {
+void appTick(void){
 	setControllerDesiredValue( getSquareWaveSignal() );
 	setControllerActualValue( getPlantOut() );
 	setPlantIn( getControllerSignal() );
@@ -37,4 +47,28 @@ void appTick(void) {
 	squareWaveTick();
 	controllerTick();
 	plantTick();
+	itTick();
+}
+
+static ItError_t itHandler(const char letter, double* result){
+	//note: strncmp is used as the itCmdBuffer is not '\0' terminated.
+	if(letter == '\r'){
+		if(strncmp(itCmdBuffer, "desiredValue", strlen("desiredValue")) == 0){
+			*result = (double)getSquareWaveSignal();
+		}else{
+			return InvalidCommand;
+		}
+		itCmdBufferIndex = 0;
+		itCmdBufferFull = false;
+	}else if(itCmdBufferFull){
+		return BufferFull;
+	}else{
+		itCmdBuffer[itCmdBufferIndex] = letter;
+		if(itCmdBufferIndex >= IT_CMD_BUFFER_SIZE){
+			itCmdBufferFull = true;
+		}else{
+			itCmdBufferIndex++;
+		}
+	}
+	return NoError;
 }
