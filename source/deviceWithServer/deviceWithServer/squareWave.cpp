@@ -29,7 +29,6 @@ static void driveOutputSignal(void);
 static void toggleOutputSignal(void);
 
 void squareWaveTick_Implementation(void) {
-	unsigned short ticksUntilToggle;
 	driveOutputSignal();
 }
 void (*squareWaveTick)(void) = squareWaveTick_Implementation;
