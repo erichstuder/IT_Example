@@ -26,7 +26,8 @@ static char itCmdBuffer[IT_CMD_BUFFER_SIZE];
 static unsigned char itCmdBufferIndex = 0;
 static bool itCmdBufferFull = false;
 
-static ItError_t itHandler(const char letter, double* result);
+static ItError_t itCmdHandler(double* result);
+static ItError_t itCmdBufferAppend(const char letter);
 
 void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readByteFromClient){
 	setSquareWaveTickTime(1e-3);
@@ -36,7 +37,7 @@ void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readB
 	setControllerKp(1);
 	setControllerKi(1);
 
-	itInit(writeBytesToClient, readByteFromClient, itHandler);
+	itInit(writeBytesToClient, readByteFromClient, itCmdHandler, itCmdBufferAppend);
 }
 
 void appTick(void){
@@ -50,25 +51,27 @@ void appTick(void){
 	itTick();
 }
 
-static ItError_t itHandler(const char letter, double* result){
-	//note: strncmp is used as the itCmdBuffer is not '\0' terminated.
-	if(letter == '\r'){
-		if(strncmp(itCmdBuffer, "desiredValue", strlen("desiredValue")) == 0){
-			*result = (double)getSquareWaveSignal();
-		}else{
-			return InvalidCommand;
-		}
-		itCmdBufferIndex = 0;
-		itCmdBufferFull = false;
-	}else if(itCmdBufferFull){
-		return BufferFull;
+static ItError_t itCmdHandler(double* result){
+	//note: strncmp is used as the itCmdBuffer is not terminated by '\0'
+	if(strncmp(itCmdBuffer, "d", strlen("d")) == 0){
+		*result = (double)getSquareWaveSignal();
 	}else{
-		itCmdBuffer[itCmdBufferIndex] = letter;
-		if(itCmdBufferIndex >= IT_CMD_BUFFER_SIZE){
-			itCmdBufferFull = true;
-		}else{
-			itCmdBufferIndex++;
-		}
+		return InvalidCommand;
+	}
+	itCmdBufferIndex = 0;
+	itCmdBufferFull = false;
+	return NoError;
+}
+
+static ItError_t itCmdBufferAppend(const char letter){
+	if(itCmdBufferFull == true){
+		return BufferFull;
+	}
+	itCmdBuffer[itCmdBufferIndex] = letter;
+	if(itCmdBufferIndex < IT_CMD_BUFFER_SIZE-1){
+		itCmdBufferIndex++;
+	}else{
+		itCmdBufferFull = true;
 	}
 	return NoError;
 }

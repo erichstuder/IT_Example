@@ -29,8 +29,9 @@ typedef enum{
 
 typedef ItError_t (*WriteBytesToClient_t)(const char* const byteArray, const unsigned int byteCount);
 typedef ItError_t (*ReadByteFromClient_t)(char* const data);
-typedef ItError_t (*InputHandler_t)(const char* const dataIn, double* result);
-void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, InputHandler_t inputHandlerCallback);
+typedef ItError_t (*CmdHandler_t)(double* result);
+typedef ItError_t (*CmdBufferAppend_t)(const char letter);
+void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback);
 
 void itTick(void);
 

@@ -21,7 +21,8 @@ const unsigned char TelegramStart = 0xAA;
 const unsigned char ReplacementMarker = 0xBB;
 static WriteBytesToClient_t writeBytesToClient;
 static ReadByteFromClient_t readByteFromClient;
-static InputHandler_t inputHandler;
+static CmdHandler_t cmdHandler;
+static CmdBufferAppend_t cmdBufferAppend;
 
 struct OutBuffer{
 	unsigned char data[255];
@@ -35,20 +36,54 @@ ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
 void initBuffer(OutBuffer* outBuffer);
 void sendError(const char* errMessage, ItError_t errId);
 
-void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, InputHandler_t inputHandlerCallback){
+void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
 	writeBytesToClient = writeBytesToClientCallback;
 	readByteFromClient = readByteFromClientCallback;
-	inputHandler = inputHandlerCallback;	
+	cmdHandler = cmdHandlerCallback;
+	cmdBufferAppend = cmdBufferAppendCallback;
 }
 
 void itTick(void){
+	//TODO: handle the errors
 	double result;
 	char dataByte;
-	ItError_t err;
-	while((err = readByteFromClient(dataByte)) == NoError){
-		inputHandler(dataByte, &result);//TODO: error abfangen
+	ItError_t readByteError;
+	ItError_t cmdHandlerError;
+	ItError_t writeBytesError;
+	ItError_t cmdBufferError;
+
+	readByteError = readByteFromClient(&dataByte);
+	if(readByteError == NoDataAvailable){
+		return;
+	}else if(readByteError == ClientUnavailable){
+		return;
+	}else if(readByteError != NoError){
+		return;
 	}
-	
+
+	if(dataByte == '\r'){
+		cmdHandlerError = cmdHandler(&result);
+		if(cmdHandlerError == InvalidCommand){
+			return;
+		}else if(cmdHandlerError != NoError){
+			return;
+		}
+		writeBytesError = writeBytesToClient((char*)&result, sizeof(result));
+		if(writeBytesError == ClientUnavailable){
+			return;
+		}else if(writeBytesError == ClientWriteError){
+			return;
+		}else if(writeBytesError != NoError){
+			return;
+		}
+	}else{
+		cmdBufferError = cmdBufferAppend(dataByte);
+		if(cmdBufferError == BufferFull){
+			return;
+		}else if(cmdBufferError != NoError){
+			return;
+		}
+	}
 }
 
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
