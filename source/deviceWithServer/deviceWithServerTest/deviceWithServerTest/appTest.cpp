@@ -16,6 +16,7 @@
  */
 
 #include "pch.h"
+
 #include "app.h"
 #include "squareWave.h"
 #include "controller.h"
@@ -37,81 +38,81 @@ CmdHandler_t cmdHandlerClb;
 CmdBufferAppend_t cmdBufferAppendClb;
 bool itTickDone;
 
-void setSquareWaveTickTime_Spy(float time) {
+static void setSquareWaveTickTime_Spy(float time) {
 	squareWaveTickTime = time;
 }
 
-void setSquareWaveFrequency_Spy(float signalFrequency) {
+static void setSquareWaveFrequency_Spy(float signalFrequency) {
 	squareWaveFrequency = signalFrequency;
 }
 
-void setSquareWaveLevels_Spy(float level1, float level2) {
+static void setSquareWaveLevels_Spy(float level1, float level2) {
 	squareWaveLevel1 = level1;
 	squareWaveLevel2 = level2;
 }
 
-float getSquareWaveSignal_Fake(void) {
+static float getSquareWaveSignal_Fake(void) {
 	return 5.0f;
 }
 
-void squareWaveTick_Spy(void) {
+static void squareWaveTick_Spy(void) {
 	squareWaveTickDone = true;
 }
 
 
-void setControllerKp_Spy(float value) {
+static void setControllerKp_Spy(float value) {
 	controllerKp = value;
 }
 
-void setControllerKi_Spy(float value) {
+static void setControllerKi_Spy(float value) {
 	controllerKi = value;
 }
 
-void setControllerDesiredValue_Spy(float value) {
+static void setControllerDesiredValue_Spy(float value) {
 	controllerDesiredValue = value;
 }
 
-void setControllerActualValue_Spy(float value) {
+static void setControllerActualValue_Spy(float value) {
 	controllerActualValue = value;
 }
 
-float getControllerSignal_Fake(void) {
+static float getControllerSignal_Fake(void) {
 	return 13.0f;
 }
 
-void controllerTick_Spy(void) {
+static void controllerTick_Spy(void) {
 	controllerTickDone = true;
 }
 
 
-float getPlantOut_Fake(void) {
+static float getPlantOut_Fake(void) {
 	return 7.0f;
 }
 
-void setPlantIn_Spy(float value) {
+static void setPlantIn_Spy(float value) {
 	plantIn = value;
 }
 
-void plantTick_Spy(void) {
+static void plantTick_Spy(void) {
 	plantTickDone = true;
 }
 
 
-ItError writeBytesToClient_Spy(const char* const byteArray, const unsigned char byteCount) {
+static ItError writeBytesToClient_Spy(const char* const byteArray, const unsigned char byteCount) {
 	return ItError::NoError;
 }
 
-ItError readByteFromClient_Spy(char* const data) {
+static ItError readByteFromClient_Spy(char* const data) {
 	return ItError::NoError;
 }
 
 
-void itInit_Spy(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) {
+static void itInit_Spy(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) {
 	cmdHandlerClb = cmdHandlerCallback;
 	cmdBufferAppendClb = cmdBufferAppendCallback;
 }
 
-void itTick_Spy(void) {
+static void itTick_Spy(void) {
 	itTickDone = true;
 }
 

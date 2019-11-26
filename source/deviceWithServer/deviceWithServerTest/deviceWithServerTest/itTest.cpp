@@ -19,9 +19,44 @@
 
 #include "it.h"
 
-TEST(ItTest, itInit) {
-	itInit(NULL, NULL, NULL, NULL);
-	//Whether the callbacks are assigned correctly is test indirectly by other tests below.
+static ItError writeBytesToClient_Spy(const char* const byteArray, const unsigned char byteCount) {
+	return ItError::NoError;
 }
 
-//TODO: more tests
+static ItError readByteFromClient_Spy(char* const data) {
+	return ItError::NoError;
+}
+
+static ItError cmdHandler_Spy(double* result) {
+	return ItError::NoError;
+}
+
+static ItError cmdBufferAppend_Spy(const char letter) {
+	return ItError::NoError;
+}
+
+
+class ItTest : public ::testing::Test {
+protected:
+
+	ItTest() {}
+
+	virtual ~ItTest() {}
+
+	virtual void SetUp() {
+		itInit(writeBytesToClient_Spy, readByteFromClient_Spy, cmdHandler_Spy, cmdBufferAppend_Spy);
+	}
+
+	virtual void TearDown() {}
+};
+
+
+TEST_F(ItTest, itInit) {
+	itInit(NULL, NULL, NULL, NULL);
+	//Whether the callbacks are assigned correctly is tested indirectly by other tests below.
+}
+
+TEST_F(ItTest, tick) {
+	itTick();
+	//TODO: add more to test
+}
