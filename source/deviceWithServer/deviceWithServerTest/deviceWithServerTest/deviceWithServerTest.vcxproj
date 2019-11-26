@@ -41,6 +41,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\deviceWithServer\app.cpp" />
     <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\it.cpp" />
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />

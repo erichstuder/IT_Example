@@ -19,7 +19,7 @@
 #define APP_H
 
 #define APP_SAMPLETIME 1 //s
-#define IT_CMD_BUFFER_SIZE 20
+#define IT_CMD_BUFFER_SIZE 20 //including zero terminator
 
 #include "it.h"
 

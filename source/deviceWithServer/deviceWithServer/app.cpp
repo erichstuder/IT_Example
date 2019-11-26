@@ -15,7 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <string.h>
-#include "arduino.h"
 
 #include "app.h"
 #include "squareWave.h"
@@ -27,10 +26,13 @@ static char itCmdBuffer[IT_CMD_BUFFER_SIZE];
 static unsigned char itCmdBufferIndex = 0;
 static bool itCmdBufferFull = false;
 
-static ItError_t itCmdHandler(double* result);
-static ItError_t itCmdBufferAppend(const char letter);
+static void clearItCmdBuffer(void);
+static ItError itCmdHandler(double* result);
+static ItError itCmdBufferAppend(const char dataByte);
 
 void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readByteFromClient){
+	clearItCmdBuffer();
+
 	setSquareWaveTickTime(1e-3);
 	setSquareWaveFrequency(0.2);
 	setSquareWaveLevels(2, 10);
@@ -52,35 +54,35 @@ void appTick(void){
 	itTick();
 }
 
-static ItError_t itCmdHandler(double* result){
+static void clearItCmdBuffer(void) {
+	for (unsigned char n = 0; n < IT_CMD_BUFFER_SIZE; n++) {
+		itCmdBuffer[n] = '\0';
+	}
 	itCmdBufferIndex = 0;
 	itCmdBufferFull = false;
-	
-	//note: strncmp is used as the itCmdBuffer is not terminated by '\0'
-
-	//Serial.println("");//debug
-	Serial.println(itCmdBuffer);//debug
-	Serial.println("d");//debug
-	
-	if(strncmp(itCmdBuffer, "desiredValue", strlen("desiredValue")) == 0){
-		*result = (double)getSquareWaveSignal();
-		Serial.println("X");//debug
-	}else{
-		return InvalidCommand;
-	}
-
-	return NoError;
 }
 
-static ItError_t itCmdBufferAppend(const char letter){
-	if(itCmdBufferFull == true){
-		return BufferFull;
+static ItError itCmdHandler(double* result){
+	ItError err = ItError::NoError;
+	if(strcmp(itCmdBuffer, "desiredValue") == 0){
+		*result = (double)getSquareWaveSignal();
+	}else{
+		*result = 0;
+		err = ItError::InvalidCommand;
 	}
-	itCmdBuffer[itCmdBufferIndex] = letter;
-	if(itCmdBufferIndex < IT_CMD_BUFFER_SIZE-1){
+	clearItCmdBuffer();
+	return err;
+}
+
+static ItError itCmdBufferAppend(const char dataByte){
+	if(itCmdBufferFull == true){
+		return ItError::BufferFull;
+	}
+	itCmdBuffer[itCmdBufferIndex] = dataByte;
+	if(itCmdBufferIndex < IT_CMD_BUFFER_SIZE-2){ //leave last byte for zero terminator
 		itCmdBufferIndex++;
 	}else{
 		itCmdBufferFull = true;
 	}
-	return NoError;
+	return ItError::NoError;
 }

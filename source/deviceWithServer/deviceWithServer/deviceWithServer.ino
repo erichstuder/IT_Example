@@ -28,8 +28,8 @@ unsigned char cnt = 0;
 //AppIn_T appIn;
 //AppOut_T appOut;
 
-ItError_t writeBytesToUart(const unsigned char* const byteArray, const unsigned int byteCount);
-ItError_t readByteFromUart(unsigned char* const data);
+ItError writeBytesToUart(const char* const byteArray, const unsigned char byteCount);
+ItError readByteFromUart(char* const data);
 
 void setup(void){
 	timerSetup();
@@ -96,24 +96,24 @@ ISR(TIMER1_COMPA_vect){
 	timerEvent = true;
 }
 
-ItError_t writeBytesToUart(const char* const byteArray, const unsigned int byteCount){
+ItError writeBytesToUart(const char* const byteArray, const unsigned char byteCount){
 	if(!Serial){
-		return ClientUnavailable;
+		return ItError::ClientUnavailable;
 	}
 	if(Serial.write(byteArray, byteCount) != byteCount){
-		return ClientWriteError;
+		return ItError::ClientWriteError;
 	}
-	return NoError;
+	return ItError::NoError;
 }
 
-ItError_t readByteFromUart(char* const data){
+ItError readByteFromUart(char* const data){
 	if(!Serial){ //TODO: brauchts das?
-		return ClientUnavailable;
+		return ItError::ClientUnavailable;
 	}
 	if(Serial.available() > 0){
 		*data = (unsigned char) Serial.read();
 	}else{
-		return NoDataAvailable;
+		return ItError::NoDataAvailable;
 	}
-	return NoError;
+	return ItError::NoError;
 }

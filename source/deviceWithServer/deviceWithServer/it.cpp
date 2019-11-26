@@ -16,7 +16,7 @@
  */
 
 #include "it.h"
-#include "arduino.h" //debug
+//#include "arduino.h" //debug
 
 const unsigned char TelegramStart = 0xAA;
 const unsigned char ReplacementMarker = 0xBB;
@@ -26,98 +26,100 @@ static CmdHandler_t cmdHandler;
 static CmdBufferAppend_t cmdBufferAppend;
 
 struct OutBuffer{
-	unsigned char data[255];
+	char data[255];
 	unsigned int writeIndex;
 };
 
-ItError_t createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
-ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
-ItError_t appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
-ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
+ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
+ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
+ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
+ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
 void initBuffer(OutBuffer* outBuffer);
-void sendError(const char* errMessage, ItError_t errId);
+void sendError(const char* errMessage, ItError errId);
 
-void itInit(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
+void itInit_Implementation(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
 	writeBytesToClient = writeBytesToClientCallback;
 	readByteFromClient = readByteFromClientCallback;
 	cmdHandler = cmdHandlerCallback;
 	cmdBufferAppend = cmdBufferAppendCallback;
 }
+void (*itInit)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) = itInit_Implementation;
 
-void itTick(void){
+void itTick_Implementation(void){
 	//TODO: handle the errors
 	double result;
 	char dataByte;
-	ItError_t readByteError;
-	ItError_t cmdHandlerError;
-	ItError_t writeBytesError;
-	ItError_t cmdBufferError;
+	ItError readByteError;
+	ItError cmdHandlerError;
+	ItError writeBytesError;
+	ItError cmdBufferError;
 
 	do{
 		readByteError = readByteFromClient(&dataByte);
-		if(readByteError == NoDataAvailable){
+		if(readByteError == ItError::NoDataAvailable){
 			return;
-		}else if(readByteError == ClientUnavailable){
+		}else if(readByteError == ItError::ClientUnavailable){
 			return;
-		}else if(readByteError != NoError){
+		}else if(readByteError != ItError::NoError){
 			return;
 		}
 	
 		if(dataByte == '\r'){
 			cmdHandlerError = cmdHandler(&result);
 	
-			Serial.println("it.cpp:");//debug
+			//Serial.println("it.cpp:");//debug
 			//Serial.println(sizeof(result));//debug
 			
-			if(cmdHandlerError == InvalidCommand){
+			if(cmdHandlerError == ItError::InvalidCommand){
 				return;
-			}else if(cmdHandlerError != NoError){
+			}else if(cmdHandlerError != ItError::NoError){
 				return;
 			}
 			
 			writeBytesError = writeBytesToClient((char*)&result, sizeof(result));
-			if(writeBytesError == ClientUnavailable){
+			if(writeBytesError == ItError::ClientUnavailable){
 				return;
-			}else if(writeBytesError == ClientWriteError){
+			}else if(writeBytesError == ItError::ClientWriteError){
 				return;
-			}else if(writeBytesError != NoError){
+			}else if(writeBytesError != ItError::NoError){
 				return;
 			}
 		}else{
 			cmdBufferError = cmdBufferAppend(dataByte);
-			if(cmdBufferError == BufferFull){
+			if(cmdBufferError == ItError::BufferFull){
 				return;
-			}else if(cmdBufferError != NoError){
+			}else if(cmdBufferError != ItError::NoError){
 				return;
 			}
 		}
 	}while(true); //TODO: refactor
 }
+void (*itTick)(void) = itTick_Implementation;
 
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
 	OutBuffer outBuffer;
-	ItError_t err;
+	ItError err;
 
 	err = createTelegram(&outBuffer, signalName, signalData, timeStampOfSignalData);
-	if(err == BufferFull){
+	if(err == ItError::BufferFull){
 		sendError("BufferFull", err);
-	}else if(err != NoError){
+	}else if(err != ItError::NoError){
 		sendError("Unexpected Error", err);
 	}
 	
  	err = writeBytesToClient(outBuffer.data, outBuffer.writeIndex);
-	if(err == ClientUnavailable){
+	if(err == ItError::ClientUnavailable){
 		//nothing done at the moment. Possible solution would be to have a buffer to store old telegrams
-	}else if(err == ClientWriteError){
+	}else if(err == ItError::ClientWriteError){
 		sendError("ClientWriteError", err);
 		for(;;);//endless loop to stop the program in case we can't send the error to the client
-	}else if(err != NoError){
+	}else if(err != ItError::NoError){
 		sendError("Unexpected Error", err);
 		for(;;);//endless loop to stop the program in case we can't send the error to the client
 	}
 }
 
-void sendError(const char* errMessage, ItError_t errId){
+void sendError(const char* errMessage, ItError errId){
   	/*TODO: comment in again
   	writeBytesToClientCallback(errMessage, strlen(errMessage));
 	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));*/
@@ -126,7 +128,9 @@ void sendError(const char* errMessage, ItError_t errId){
 //TODO:
 //- CRC
 //- zero terminator at end of signal name string
-ItError_t createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
+ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
+	//Telegram definition: telegrammId, telegrammLength, valueName, valueDataTypeId, value, timeDataTypeId, timeStampOfValue
+	
 	/*TODO: comment in again
 	ItError_t err;
 	
@@ -147,7 +151,7 @@ ItError_t createTelegram(OutBuffer* outBuffer, char* signalName, double signalDa
 		return err;
 	}*/
 
-	return NoError;
+	return ItError::NoError;
 }
 
 void initBuffer(OutBuffer* outBuffer){
@@ -155,40 +159,40 @@ void initBuffer(OutBuffer* outBuffer){
 	outBuffer->writeIndex = 2;
 }
 
-ItError_t appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
-	ItError_t err;
+ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
+	ItError err;
 	
 	union{
 		double doubleValue;
-		unsigned char byteArray[sizeof(doubleValue)];
+		char byteArray[sizeof(doubleValue)];
 	}doubleToByteArray;
 	doubleToByteArray.doubleValue = doubleToAppend;
 	
 	err = appendCharArrayToBuffer(outBuffer, doubleToByteArray.byteArray, sizeof(doubleToByteArray.byteArray));
-	if(err != NoError){
+	if(err != ItError::NoError){
 		return err;
 	}
 	
-	return NoError;
+	return ItError::NoError;
 }
 
-ItError_t appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
-	ItError_t err;
+ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
+	ItError err;
 	
 	for(unsigned int idx = 0; idx < arrayLength; idx++){
 		err = appendByteToBuffer(outBuffer, array[idx]);
-		if(err != NoError){
+		if(err != ItError::NoError){
 			return err;
 		}
 	}
-	return NoError;
+	return ItError::NoError;
 }
 
-ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
-	ItError_t err;
+ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
+	ItError err;
 	
 	if(outBuffer->writeIndex >= sizeof(outBuffer->data)){
-		return BufferFull;
+		return ItError::BufferFull;
 	}
 	
 	if((byteToAppend == TelegramStart) || (byteToAppend == ReplacementMarker)){
@@ -196,7 +200,7 @@ ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
 		outBuffer->writeIndex++;
 		
 		err = appendByteToBuffer(outBuffer, byteToAppend-1);
-		if(err != NoError){
+		if(err != ItError::NoError){
 			return err;
 		}
 	}else{
@@ -205,5 +209,5 @@ ItError_t appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
 	}
 	
 	outBuffer->data[1]=outBuffer->writeIndex;//set telegram length
-	return NoError;
+	return ItError::NoError;
 }

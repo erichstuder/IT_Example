@@ -16,6 +16,9 @@ float controllerActualValue;
 bool controllerTickDone;
 float plantIn;
 bool plantTickDone;
+CmdHandler_t cmdHandlerClb;
+CmdBufferAppend_t cmdBufferAppendClb;
+bool itTickDone;
 
 void setSquareWaveTickTime_Spy(float time) {
 	squareWaveTickTime = time;
@@ -77,6 +80,25 @@ void plantTick_Spy(void) {
 }
 
 
+ItError writeBytesToClient_Spy(const char* const byteArray, const unsigned char byteCount) {
+	return ItError::NoError;
+}
+
+ItError readByteFromClient_Spy(char* const data) {
+	return ItError::NoError;
+}
+
+
+void itInit_Spy(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) {
+	cmdHandlerClb = cmdHandlerCallback;
+	cmdBufferAppendClb = cmdBufferAppendCallback;
+}
+
+void itTick_Spy(void) {
+	itTickDone = true;
+}
+
+
 class AppTest : public ::testing::Test {
 protected:
 	//TODO: gibt es dafür nicht irgendwelche MAKROS?
@@ -97,6 +119,9 @@ protected:
 	void (*setPlantIn_Original)(float value) = NULL;
 	void (*plantTick_Original)(void) = NULL;
 
+	void (*itInit_Original)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) = NULL;
+	void (*itTick_Original)(void) = NULL;
+
 	AppTest() {}
 
 	virtual ~AppTest() {}
@@ -114,6 +139,7 @@ protected:
 		controllerTickDone = false;
 		plantIn = 0.0f;
 		plantTickDone = false;
+		itTickDone = false;
 
 		setSquareWaveTickTime_Original = setSquareWaveTickTime;
 		setSquareWaveTickTime = setSquareWaveTickTime_Spy;
@@ -158,6 +184,13 @@ protected:
 
 		plantTick_Original = plantTick;
 		plantTick = plantTick_Spy;
+
+
+		itInit_Original = itInit;
+		itInit = itInit_Spy;
+
+		itTick_Original = itTick;
+		itTick = itTick_Spy;
 	}
 
 	virtual void TearDown() {
@@ -177,6 +210,9 @@ protected:
 		getPlantOut = getPlantOut_Original;
 		setPlantIn = setPlantIn_Original;
 		plantTick = plantTick_Original;
+
+		itInit = itInit_Original;
+		itTick = itTick_Original;
 	}
 };
 
@@ -187,7 +223,7 @@ TEST_F(AppTest, appInitSettings) {
 	ASSERT_EQ(squareWaveLevel2, 0.0f);
 	ASSERT_EQ(controllerKp, 0.0f);
 	ASSERT_EQ(controllerKi, 0.0f);
-	appInit();
+	appInit(NULL, NULL);
 	ASSERT_EQ(squareWaveTickTime, 1e-3f);
 	ASSERT_EQ(squareWaveFrequency, 0.2f);
 	ASSERT_EQ(squareWaveLevel1, 2.0f);
@@ -200,6 +236,7 @@ TEST_F(AppTest, appTickWiring) {
 	ASSERT_EQ(controllerDesiredValue, 0.0f);
 	ASSERT_EQ(controllerActualValue, 0.0f);
 	ASSERT_EQ(plantIn, 0.0f);
+	appInit(writeBytesToClient_Spy, readByteFromClient_Spy);
 	appTick();
 	ASSERT_EQ(controllerDesiredValue, 5.0f);
 	ASSERT_EQ(controllerActualValue, 7.0f);
@@ -210,8 +247,63 @@ TEST_F(AppTest, appTickFunctions) {
 	ASSERT_FALSE(squareWaveTickDone);
 	ASSERT_FALSE(controllerTickDone);
 	ASSERT_FALSE(plantTickDone);
+	appInit(writeBytesToClient_Spy, readByteFromClient_Spy);
 	appTick();
 	ASSERT_TRUE(squareWaveTickDone);
 	ASSERT_TRUE(controllerTickDone);
 	ASSERT_TRUE(plantTickDone);
+}
+
+TEST_F(AppTest, itTickIsCalled) {
+	ASSERT_FALSE(itTickDone);
+	appTick();
+	ASSERT_TRUE(itTickDone);
+}
+
+TEST_F(AppTest, cmdBufferSize) {
+	ASSERT_EQ(IT_CMD_BUFFER_SIZE, 20);
+}
+
+TEST_F(AppTest, appendToBufferFull) {
+	appInit(NULL, NULL);
+
+	const unsigned char NrOfBytesToSend = 40;
+	ItError err[NrOfBytesToSend];
+	for (int n = 0; n < NrOfBytesToSend; n++) {
+		err[n] = cmdBufferAppendClb(42);
+	}
+	ASSERT_EQ(err[0], ItError::NoError);
+	ASSERT_EQ(err[18], ItError::NoError);
+	ASSERT_EQ(err[19], ItError::BufferFull);
+	ASSERT_EQ(err[39], ItError::BufferFull);
+}
+
+TEST_F(AppTest, handleCmd) {
+	appInit(NULL, NULL);
+
+	char cmd[] = "desiredValue";
+	ItError err;
+	for (int n = 0; n < strlen(cmd); n++) {
+		ASSERT_EQ(cmdBufferAppendClb(cmd[n]), ItError::NoError);
+	}
+
+	double value;
+	err = cmdHandlerClb(&value);
+	ASSERT_EQ(err, ItError::NoError);
+	ASSERT_EQ(value, 5.0f);
+}
+
+TEST_F(AppTest, handleInvalidCmd) {
+	appInit(NULL, NULL);
+
+	char cmd[] = "desiredValue42"; //take a valid cmd and add something
+	ItError err;
+	for (int n = 0; n < strlen(cmd); n++) {
+		ASSERT_EQ(cmdBufferAppendClb(cmd[n]), ItError::NoError);
+	}
+
+	double value;
+	err = cmdHandlerClb(&value);
+	ASSERT_EQ(err, ItError::InvalidCommand);
+	ASSERT_EQ(value, 0.0f);
 }

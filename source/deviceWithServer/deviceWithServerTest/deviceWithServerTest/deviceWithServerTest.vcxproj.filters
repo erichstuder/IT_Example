@@ -10,6 +10,7 @@
     <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\it.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
