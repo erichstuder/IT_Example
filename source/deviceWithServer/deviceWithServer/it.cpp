@@ -20,6 +20,7 @@
 
 const unsigned char TelegramStart = 0xAA;
 const unsigned char ReplacementMarker = 0xBB;
+
 static WriteBytesToClient_t writeBytesToClient;
 static ReadByteFromClient_t readByteFromClient;
 static CmdHandler_t cmdHandler;
@@ -30,12 +31,12 @@ struct OutBuffer{
 	unsigned int writeIndex;
 };
 
-ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
-ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
-ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
-ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
-void initBuffer(OutBuffer* outBuffer);
-void sendError(const char* errMessage, ItError errId);
+static ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
+static ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
+static ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
+static ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
+static void initBuffer(OutBuffer* outBuffer);
+//static void sendError(const char* errMessage, ItError errId);
 
 static void itInit_Implementation(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
 	writeBytesToClient = writeBytesToClientCallback;
@@ -66,10 +67,6 @@ static void itTick_Implementation(void){
 	
 		if(dataByte == '\r'){
 			cmdHandlerError = cmdHandler(&result);
-	
-			//Serial.println("it.cpp:");//debug
-			//Serial.println(sizeof(result));//debug
-			
 			if(cmdHandlerError == ItError::InvalidCommand){
 				return;
 			}else if(cmdHandlerError != ItError::NoError){
@@ -87,16 +84,16 @@ static void itTick_Implementation(void){
 		}else{
 			cmdBufferError = cmdBufferAppend(dataByte);
 			if(cmdBufferError == ItError::BufferFull){
-				return;
+				return;//TODO: inform client
 			}else if(cmdBufferError != ItError::NoError){
 				return;
 			}
 		}
-	}while(true); //TODO: refactor
+	}while(true);
 }
 void (*itTick)(void) = itTick_Implementation;
 
-void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
+/*static void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){
 	OutBuffer outBuffer;
 	ItError err;
 
@@ -117,19 +114,18 @@ void itSendToClient(char* signalName, double signalData, double timeStampOfSigna
 		sendError("Unexpected Error", err);
 		for(;;);//endless loop to stop the program in case we can't send the error to the client
 	}
-}
+}*/
 
-void sendError(const char* errMessage, ItError errId){
-  	/*TODO: comment in again
+/*static void sendError(const char* errMessage, ItError errId){
   	writeBytesToClientCallback(errMessage, strlen(errMessage));
-	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));*/
-}
+	writeBytesToClientCallback((const byte*)(&errId), sizeof(errId));
+}*/
 
 //TODO:
 //- CRC
 //- zero terminator at end of signal name string
-ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
-	//Telegram definition: telegrammId, telegrammLength, valueName, valueDataTypeId, value, timeDataTypeId, timeStampOfValue
+static ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData){
+	//Telegram definition: telegrammId, telegramLength, telegramType(data, error, ...), valueName, valueDataTypeId, value, timeDataTypeId, timeStampOfValue
 	
 	/*TODO: comment in again
 	ItError_t err;
@@ -154,12 +150,12 @@ ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData
 	return ItError::NoError;
 }
 
-void initBuffer(OutBuffer* outBuffer){
+static void initBuffer(OutBuffer* outBuffer){
 	outBuffer->data[0] = TelegramStart;
 	outBuffer->writeIndex = 2;
 }
 
-ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
+static ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
 	ItError err;
 	
 	union{
@@ -176,7 +172,7 @@ ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend){
 	return ItError::NoError;
 }
 
-ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
+static ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength){
 	ItError err;
 	
 	for(unsigned int idx = 0; idx < arrayLength; idx++){
@@ -188,7 +184,7 @@ ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigne
 	return ItError::NoError;
 }
 
-ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
+static ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend){
 	ItError err;
 	
 	if(outBuffer->writeIndex >= sizeof(outBuffer->data)){

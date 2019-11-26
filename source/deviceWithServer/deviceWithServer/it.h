@@ -30,7 +30,7 @@ enum class ItError {
 typedef ItError (*WriteBytesToClient_t)(const char* const byteArray, const unsigned char byteCount);
 typedef ItError (*ReadByteFromClient_t)(char* const data);
 typedef ItError (*CmdHandler_t)(double* result);
-typedef ItError (*CmdBufferAppend_t)(const char letter);
+typedef ItError (*CmdBufferAppend_t)(const char dataByte);
 
 extern void (*itInit)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback);
 extern void (*itTick)(void);
