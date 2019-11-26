@@ -25,7 +25,7 @@ static float Ki;
 static float integratorValue;
 bool isInitialized = false;
 
-void controllerTick_Implementation(void) {
+static void controllerTick_Implementation(void) {
 	if (!isInitialized) {
 		controllerReset();
 		isInitialized = true;
@@ -41,27 +41,27 @@ void controllerReset(void) {
 	integratorValue = 0;
 }
 
-void setControllerDesiredValue_Implementation(float value) {
+static void setControllerDesiredValue_Implementation(float value) {
 	desiredValue = value;
 }
 void (*setControllerDesiredValue)(float value) = setControllerDesiredValue_Implementation;
 
-void setControllerActualValue_Implementation(float value) {
+static void setControllerActualValue_Implementation(float value) {
 	actualValue = value;
 }
 void (*setControllerActualValue)(float value) = setControllerActualValue_Implementation;
 
-void setControllerKp_Implementation(float value) {
+static void setControllerKp_Implementation(float value) {
 	Kp = value;
 }
 void (*setControllerKp)(float value) = setControllerKp_Implementation;
 
-void setControllerKi_Implementation(float value) {
+static void setControllerKi_Implementation(float value) {
 	Ki = value;
 }
 void (*setControllerKi)(float value) = setControllerKi_Implementation;
 
-float getControllerSignal_Implementation(void) {
+static float getControllerSignal_Implementation(void) {
 	return signal;
 }
 float (*getControllerSignal)(void) = getControllerSignal_Implementation;
