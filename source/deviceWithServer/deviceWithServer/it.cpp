@@ -16,6 +16,7 @@
  */
 
 #include "it.h"
+#include "arduino.h" //debug
 
 const unsigned char TelegramStart = 0xAA;
 const unsigned char ReplacementMarker = 0xBB;
@@ -52,38 +53,45 @@ void itTick(void){
 	ItError_t writeBytesError;
 	ItError_t cmdBufferError;
 
-	readByteError = readByteFromClient(&dataByte);
-	if(readByteError == NoDataAvailable){
-		return;
-	}else if(readByteError == ClientUnavailable){
-		return;
-	}else if(readByteError != NoError){
-		return;
-	}
-
-	if(dataByte == '\r'){
-		cmdHandlerError = cmdHandler(&result);
-		if(cmdHandlerError == InvalidCommand){
+	do{
+		readByteError = readByteFromClient(&dataByte);
+		if(readByteError == NoDataAvailable){
 			return;
-		}else if(cmdHandlerError != NoError){
+		}else if(readByteError == ClientUnavailable){
+			return;
+		}else if(readByteError != NoError){
 			return;
 		}
-		writeBytesError = writeBytesToClient((char*)&result, sizeof(result));
-		if(writeBytesError == ClientUnavailable){
-			return;
-		}else if(writeBytesError == ClientWriteError){
-			return;
-		}else if(writeBytesError != NoError){
-			return;
+	
+		if(dataByte == '\r'){
+			cmdHandlerError = cmdHandler(&result);
+	
+			Serial.println("it.cpp:");//debug
+			//Serial.println(sizeof(result));//debug
+			
+			if(cmdHandlerError == InvalidCommand){
+				return;
+			}else if(cmdHandlerError != NoError){
+				return;
+			}
+			
+			writeBytesError = writeBytesToClient((char*)&result, sizeof(result));
+			if(writeBytesError == ClientUnavailable){
+				return;
+			}else if(writeBytesError == ClientWriteError){
+				return;
+			}else if(writeBytesError != NoError){
+				return;
+			}
+		}else{
+			cmdBufferError = cmdBufferAppend(dataByte);
+			if(cmdBufferError == BufferFull){
+				return;
+			}else if(cmdBufferError != NoError){
+				return;
+			}
 		}
-	}else{
-		cmdBufferError = cmdBufferAppend(dataByte);
-		if(cmdBufferError == BufferFull){
-			return;
-		}else if(cmdBufferError != NoError){
-			return;
-		}
-	}
+	}while(true); //TODO: refactor
 }
 
 void itSendToClient(char* signalName, double signalData, double timeStampOfSignalData){

@@ -51,14 +51,29 @@ comPortReceiver.setOnErrorNoExit(lambda: print('comPortReceiver errorNoExit'))
 comPortReceiver.start()
 """
 threading.Thread(target=__inputReaderWorker).start()
-comPortHandler = ComPortHandler(port='COM6', baudrate=9600)
+comPortHandler = ComPortHandler(port='COM8', baudrate=9600)
 while True:
     while not inputQueue.empty():
         inputData = inputQueue.get(block=False)
         print(inputData)
+        inputData = inputData + '\r'
         comPortHandler.write(inputData)
-    print(comPortHandler.read().decode('utf-8'), end='')
+        # comPortHandler.write('\r')  # debug
+
+    data = comPortHandler.read()
+    if data != b'':
+        print(data.decode("utf-8"), end='')
+        # print(data, end='')
+    """
+    try:
+        data = comPortHandler.read()
+        print(data, end='')
+    except UnicodeDecodeError:
+        print('')
+        print("Not utf-8: ", end='')
+        print(data)
     time.sleep(0.01)
+    """
 
     """
     cmd = input()

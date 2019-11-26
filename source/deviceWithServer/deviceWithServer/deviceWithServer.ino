@@ -45,12 +45,12 @@ void loop(void){
 		return;
 	}
 
-	if(cnt < 5){//debug
+	/*if(cnt < 5){//debug
 		cnt++;
 	}else{
 		cnt = 0;
 		Serial.println("5s timerEvent");
-	}
+	}*/
 	
 	setBuiltinLedOn();
  

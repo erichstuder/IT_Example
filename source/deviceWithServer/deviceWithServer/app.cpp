@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <string.h>
+#include "arduino.h"
 
 #include "app.h"
 #include "squareWave.h"
@@ -52,14 +53,22 @@ void appTick(void){
 }
 
 static ItError_t itCmdHandler(double* result){
+	itCmdBufferIndex = 0;
+	itCmdBufferFull = false;
+	
 	//note: strncmp is used as the itCmdBuffer is not terminated by '\0'
-	if(strncmp(itCmdBuffer, "d", strlen("d")) == 0){
+
+	//Serial.println("");//debug
+	Serial.println(itCmdBuffer);//debug
+	Serial.println("d");//debug
+	
+	if(strncmp(itCmdBuffer, "desiredValue", strlen("desiredValue")) == 0){
 		*result = (double)getSquareWaveSignal();
+		Serial.println("X");//debug
 	}else{
 		return InvalidCommand;
 	}
-	itCmdBufferIndex = 0;
-	itCmdBufferFull = false;
+
 	return NoError;
 }
 

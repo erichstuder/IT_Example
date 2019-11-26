@@ -39,7 +39,7 @@ class ComPortHandler:
         if not self.__serialPort.is_open:
             self.__open()
         try:
-            self.__serialPort.write(data)
+            self.__serialPort.write(data.encode())
         except serial.serialutil.SerialException as e:
             self.__onError('Could not write data')
         except Exception as e:
