@@ -37,7 +37,7 @@ ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
 void initBuffer(OutBuffer* outBuffer);
 void sendError(const char* errMessage, ItError errId);
 
-void itInit_Implementation(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
+static void itInit_Implementation(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback){
 	writeBytesToClient = writeBytesToClientCallback;
 	readByteFromClient = readByteFromClientCallback;
 	cmdHandler = cmdHandlerCallback;
@@ -45,7 +45,7 @@ void itInit_Implementation(WriteBytesToClient_t writeBytesToClientCallback, Read
 }
 void (*itInit)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) = itInit_Implementation;
 
-void itTick_Implementation(void){
+static void itTick_Implementation(void){
 	//TODO: handle the errors
 	double result;
 	char dataByte;
