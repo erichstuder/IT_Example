@@ -17,6 +17,11 @@
 
 #include "pch.h"
 
-TEST(ItTest, appInitSettings) {
+#include "it.h"
 
+TEST(ItTest, itInit) {
+	itInit(NULL, NULL, NULL, NULL);
+	//Whether the callbacks are assigned correctly is test indirectly by other tests below.
 }
+
+//TODO: more tests

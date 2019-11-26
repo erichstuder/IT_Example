@@ -11,6 +11,7 @@
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="..\..\deviceWithServer\it.cpp" />
+    <ClCompile Include="itTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

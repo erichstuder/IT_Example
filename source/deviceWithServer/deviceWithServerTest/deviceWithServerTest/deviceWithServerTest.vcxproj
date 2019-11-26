@@ -46,6 +46,7 @@
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
+    <ClCompile Include="itTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
