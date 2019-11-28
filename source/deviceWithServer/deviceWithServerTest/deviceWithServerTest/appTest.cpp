@@ -21,6 +21,7 @@
 #include "squareWave.h"
 #include "controller.h"
 #include "plant.h"
+#include "it.h"
 
 float squareWaveTickTime;
 float squareWaveFrequency;
@@ -34,8 +35,12 @@ float controllerActualValue;
 bool controllerTickDone;
 float plantIn;
 bool plantTickDone;
-CmdHandler_t cmdHandlerClb;
-CmdBufferAppend_t cmdBufferAppendClb;
+char byteToReadFromClient;
+unsigned char nrOfBytesToReadFromClient;
+unsigned char itCmdBufferConstantSize;
+CmdHandler_t itCmdHandler;
+WriteByteToClient_t writeByteToClient;
+ReadByteFromClient_t readByteFromClient;
 bool itTickDone;
 
 static void setSquareWaveTickTime_Spy(float time) {
@@ -98,18 +103,27 @@ static void plantTick_Spy(void) {
 }
 
 
-static ItError writeBytesToClient_Spy(const char* const byteArray, const unsigned char byteCount) {
+static ItError writeByteToClient_Spy(const char data) {
 	return ItError::NoError;
 }
 
 static ItError readByteFromClient_Spy(char* const data) {
-	return ItError::NoError;
+	if (nrOfBytesToReadFromClient > 0) {
+		*data = byteToReadFromClient;
+		nrOfBytesToReadFromClient--;
+		return ItError::NoError;
+	}
+	else {
+		return ItError::NoDataAvailable;
+	}
 }
 
 
-static void itInit_Spy(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) {
-	cmdHandlerClb = cmdHandlerCallback;
-	cmdBufferAppendClb = cmdBufferAppendCallback;
+static void itInit_Spy(char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
+	itCmdBufferConstantSize = itCmdBufferSize;
+	itCmdHandler = cmdHandlerCallback;
+	writeByteToClient = writeByteToClientCallback;
+	readByteFromClient = readByteFromClientCallback;
 }
 
 static void itTick_Spy(void) {
@@ -137,7 +151,7 @@ protected:
 	void (*setPlantIn_Original)(float value) = NULL;
 	void (*plantTick_Original)(void) = NULL;
 
-	void (*itInit_Original)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback) = NULL;
+	void (*itInit_Original)(char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) = NULL;
 	void (*itTick_Original)(void) = NULL;
 
 	AppTest() {}
@@ -209,6 +223,10 @@ protected:
 
 		itTick_Original = itTick;
 		itTick = itTick_Spy;
+
+		itCmdBufferConstantSize = 0;
+		writeByteToClient = NULL;
+		readByteFromClient = NULL;
 	}
 
 	virtual void TearDown() {
@@ -254,7 +272,7 @@ TEST_F(AppTest, appTickWiring) {
 	ASSERT_EQ(controllerDesiredValue, 0.0f);
 	ASSERT_EQ(controllerActualValue, 0.0f);
 	ASSERT_EQ(plantIn, 0.0f);
-	appInit(writeBytesToClient_Spy, readByteFromClient_Spy);
+	appInit(writeByteToClient_Spy, readByteFromClient_Spy);
 	appTick();
 	ASSERT_EQ(controllerDesiredValue, 5.0f);
 	ASSERT_EQ(controllerActualValue, 7.0f);
@@ -265,63 +283,57 @@ TEST_F(AppTest, appTickFunctions) {
 	ASSERT_FALSE(squareWaveTickDone);
 	ASSERT_FALSE(controllerTickDone);
 	ASSERT_FALSE(plantTickDone);
-	appInit(writeBytesToClient_Spy, readByteFromClient_Spy);
+	ASSERT_FALSE(itTickDone);
+	appInit(writeByteToClient_Spy, readByteFromClient_Spy);
 	appTick();
 	ASSERT_TRUE(squareWaveTickDone);
 	ASSERT_TRUE(controllerTickDone);
 	ASSERT_TRUE(plantTickDone);
-}
-
-TEST_F(AppTest, itTickIsCalled) {
-	ASSERT_FALSE(itTickDone);
-	appTick();
 	ASSERT_TRUE(itTickDone);
 }
 
-TEST_F(AppTest, cmdBufferSize) {
-	ASSERT_EQ(IT_CMD_BUFFER_SIZE, 20);
+TEST_F(AppTest, itInitCalled) {
+	ASSERT_TRUE(writeByteToClient == NULL);
+	ASSERT_TRUE(readByteFromClient == NULL);
+	ASSERT_EQ(itCmdBufferConstantSize, 0);
+	appInit(writeByteToClient_Spy, readByteFromClient_Spy);
+	ASSERT_TRUE(writeByteToClient == writeByteToClient_Spy);
+	ASSERT_TRUE(readByteFromClient == readByteFromClient_Spy);
+	ASSERT_EQ(itCmdBufferConstantSize, 30);
 }
 
-TEST_F(AppTest, appendToBufferFull) {
-	appInit(NULL, NULL);
+TEST(AppTest_WithIt, handleCmd) {
+	appInit(writeByteToClient_Spy, readByteFromClient_Spy);
 
-	const unsigned char NrOfBytesToSend = 40;
-	ItError err[NrOfBytesToSend];
-	for (int n = 0; n < NrOfBytesToSend; n++) {
-		err[n] = cmdBufferAppendClb(42);
-	}
-	ASSERT_EQ(err[0], ItError::NoError);
-	ASSERT_EQ(err[18], ItError::NoError);
-	ASSERT_EQ(err[19], ItError::BufferFull);
-	ASSERT_EQ(err[39], ItError::BufferFull);
-}
-
-TEST_F(AppTest, handleCmd) {
-	appInit(NULL, NULL);
-
-	char cmd[] = "desiredValue";
+	char cmd[] = "desiredValue\r";
 	ItError err;
 	for (int n = 0; n < strlen(cmd); n++) {
-		ASSERT_EQ(cmdBufferAppendClb(cmd[n]), ItError::NoError);
+		byteToReadFromClient = cmd[n];
+		nrOfBytesToReadFromClient = 1;
+		appTick();
 	}
 
 	double value;
-	err = cmdHandlerClb(&value);
+	unsigned long timeStamp;
+	err = itCmdHandler(&value, &timeStamp);
 	ASSERT_EQ(err, ItError::NoError);
-	ASSERT_EQ(value, 5.0f);
+	ASSERT_EQ(value, 2.0f);
 }
 
 TEST_F(AppTest, handleInvalidCmd) {
-	appInit(NULL, NULL);
+	appInit(writeByteToClient_Spy, readByteFromClient_Spy);
 
-	char cmd[] = "desiredValue42"; //take a valid cmd and add something
+	char cmd[] = "desiredValue42\r";
 	ItError err;
 	for (int n = 0; n < strlen(cmd); n++) {
-		ASSERT_EQ(cmdBufferAppendClb(cmd[n]), ItError::NoError);
+		byteToReadFromClient = cmd[n];
+		nrOfBytesToReadFromClient = 1;
+		appTick();
 	}
 
 	double value;
-	err = cmdHandlerClb(&value);
+	unsigned long timeStamp;
+	err = itCmdHandler(&value, &timeStamp);
 	ASSERT_EQ(err, ItError::InvalidCommand);
 	ASSERT_EQ(value, 0.0f);
 }

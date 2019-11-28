@@ -22,17 +22,12 @@
 #include "plant.h"
 #include "it.h"
 
-static char itCmdBuffer[IT_CMD_BUFFER_SIZE];
-static unsigned char itCmdBufferIndex = 0;
-static bool itCmdBufferFull = false;
+static const unsigned char ItCmdBufferSize = 30;
+static char itCmdBuffer[ItCmdBufferSize];
 
-static void clearItCmdBuffer(void);
-static ItError itCmdHandler(double* result);
-static ItError itCmdBufferAppend(const char dataByte);
+static ItError itCmdHandler(double* result, unsigned long* timeStamp);
 
-void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readByteFromClient){
-	clearItCmdBuffer();
-
+void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient){
 	setSquareWaveTickTime(1e-3);
 	setSquareWaveFrequency(0.2);
 	setSquareWaveLevels(2, 10);
@@ -40,7 +35,7 @@ void appInit(WriteBytesToClient_t writeBytesToClient, ReadByteFromClient_t readB
 	setControllerKp(1);
 	setControllerKi(1);
 
-	itInit(writeBytesToClient, readByteFromClient, itCmdHandler, itCmdBufferAppend);
+	itInit(itCmdBuffer, ItCmdBufferSize, itCmdHandler, writeByteToClient, readByteFromClient);
 }
 
 void appTick(void){
@@ -54,15 +49,7 @@ void appTick(void){
 	itTick();
 }
 
-static void clearItCmdBuffer(void) {
-	for (unsigned char n = 0; n < IT_CMD_BUFFER_SIZE; n++) {
-		itCmdBuffer[n] = '\0';
-	}
-	itCmdBufferIndex = 0;
-	itCmdBufferFull = false;
-}
-
-static ItError itCmdHandler(double* result){
+static ItError itCmdHandler(double* result, unsigned long* timeStamp){
 	ItError err = ItError::NoError;
 	if(strcmp(itCmdBuffer, "desiredValue") == 0){
 		*result = (double)getSquareWaveSignal();
@@ -70,19 +57,5 @@ static ItError itCmdHandler(double* result){
 		*result = 0;
 		err = ItError::InvalidCommand;
 	}
-	clearItCmdBuffer();
 	return err;
-}
-
-static ItError itCmdBufferAppend(const char dataByte){
-	if(itCmdBufferFull == true){
-		return ItError::BufferFull;
-	}
-	itCmdBuffer[itCmdBufferIndex] = dataByte;
-	if(itCmdBufferIndex < IT_CMD_BUFFER_SIZE-2){ //leave last byte for zero terminator
-		itCmdBufferIndex++;
-	}else{
-		itCmdBufferFull = true;
-	}
-	return ItError::NoError;
 }
