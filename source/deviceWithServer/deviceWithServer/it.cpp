@@ -56,12 +56,6 @@ enum class ValueType {
 	Double = 0x03,
 };
 
-//static ItError createTelegram(OutBuffer* outBuffer, char* signalName, double signalData, double timeStampOfSignalData);
-//static ItError appendByteToBuffer(OutBuffer* outBuffer, unsigned char byteToAppend);
-//static ItError appendCharArrayToBuffer(OutBuffer* outBuffer, const char* array, unsigned int arrayLength);
-//static ItError appendDoubleToBuffer(OutBuffer* outBuffer, double doubleToAppend);
-//static void initBuffer(OutBuffer* outBuffer);
-//static void sendError(const char* errMessage, ItError errId);
 static ItError sendAnswer(void);
 static ItError sendContentByte(unsigned char data);
 static ItError sendTelegramStart(void);
@@ -84,7 +78,6 @@ static void itInit_Implementation(unsigned char* itCmdBuffer, unsigned char itCm
 	writeByteToClient = writeByteToClientCallback;
 	readByteFromClient = readByteFromClientCallback;
 	cmdHandler = cmdHandlerCallback;
-	//cmdBufferAppend = cmdBufferAppendCallback;
 }
 void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) = itInit_Implementation;
 
