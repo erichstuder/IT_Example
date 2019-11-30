@@ -57,7 +57,7 @@ TEST_F(SquareWaveTest, setSignalFrequency) {
 }
 
 TEST_F(SquareWaveTest, frquency1Hz) {
-	setSquareWaveTickTime(0.025);
+	setSquareWaveTickTime(0.025f);
 	setSquareWaveFrequency(1);
 
 	for (int i = 0; i < 1e3; i++) {
@@ -74,7 +74,7 @@ TEST_F(SquareWaveTest, frquency1Hz) {
 
 TEST_F(SquareWaveTest, amplitude) {
 	setSquareWaveLevels(-4, 67);
-	setSquareWaveTickTime(0.001);
+	setSquareWaveTickTime(0.001f);
 	setSquareWaveFrequency(250);
 
 	float maximum = FLT_MIN;
