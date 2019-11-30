@@ -29,7 +29,7 @@ static GetCurrentMillis_t getMillis;
 static ItError itCmdHandler(double* result, unsigned long* timeStamp);
 
 void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
-	setSquareWaveTickTime(1e-3f);
+	setSquareWaveTickTime(APP_SAMPLETIME);
 	setSquareWaveFrequency(0.2f);
 	setSquareWaveLevels(2, 10);
 

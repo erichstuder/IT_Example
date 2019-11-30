@@ -263,7 +263,7 @@ TEST_F(AppTest, appInitSettings) {
 	ASSERT_EQ(controllerKp, 0.0f);
 	ASSERT_EQ(controllerKi, 0.0f);
 	appInit(NULL, NULL, NULL);
-	ASSERT_EQ(squareWaveTickTime, 1e-3f);
+	ASSERT_EQ(squareWaveTickTime, 1);
 	ASSERT_EQ(squareWaveFrequency, 0.2f);
 	ASSERT_EQ(squareWaveLevel1, 2.0f);
 	ASSERT_EQ(squareWaveLevel2, 10.0f);
@@ -320,7 +320,7 @@ TEST(AppTest_withIt, handleCmd) {
 	unsigned long timeStamp = 0;
 	err = itCmdHandler(&value, &timeStamp);
 	ASSERT_EQ(err, ItError::NoError);
-	ASSERT_EQ(value, 2.0f);
+	ASSERT_EQ(value, 10);
 	ASSERT_EQ(timeStamp, 33);
 }
 
