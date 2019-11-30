@@ -27,12 +27,12 @@ enum class ItError {
 	InvalidCommand,
 };
 
-typedef ItError (*WriteBytesToClient_t)(const char* const byteArray, const unsigned char byteCount);
-typedef ItError (*ReadByteFromClient_t)(char* const data);
-typedef ItError (*CmdHandler_t)(double* result);
-typedef ItError (*CmdBufferAppend_t)(const char dataByte);
+typedef ItError (*WriteByteToClient_t)(const unsigned char data);
+typedef ItError (*ReadByteFromClient_t)(unsigned char* const data);
+typedef ItError (*CmdHandler_t)(double* result, unsigned long* timeStamp);
+typedef ItError (*CmdBufferAppend_t)(const unsigned char dataByte);
 
-extern void (*itInit)(WriteBytesToClient_t writeBytesToClientCallback, ReadByteFromClient_t readByteFromClientCallback, CmdHandler_t cmdHandlerCallback, CmdBufferAppend_t cmdBufferAppendCallback);
+extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback);
 extern void (*itTick)(void);
 
 #endif //IT_H

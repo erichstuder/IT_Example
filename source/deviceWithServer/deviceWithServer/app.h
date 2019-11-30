@@ -22,7 +22,9 @@
 
 #define APP_SAMPLETIME 1 //s
 
-void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient);
+typedef unsigned long (*GetCurrentMillis_t)(void);
+
+void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis);
 void appTick(void);
 
 #endif //APP_H

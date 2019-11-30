@@ -23,19 +23,22 @@
 #include "it.h"
 
 static const unsigned char ItCmdBufferSize = 30;
-static char itCmdBuffer[ItCmdBufferSize];
+static unsigned char itCmdBuffer[ItCmdBufferSize];
+static GetCurrentMillis_t getMillis;
 
 static ItError itCmdHandler(double* result, unsigned long* timeStamp);
 
-void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient){
-	setSquareWaveTickTime(1e-3);
-	setSquareWaveFrequency(0.2);
+void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
+	setSquareWaveTickTime(1e-3f);
+	setSquareWaveFrequency(0.2f);
 	setSquareWaveLevels(2, 10);
 
 	setControllerKp(1);
 	setControllerKi(1);
 
 	itInit(itCmdBuffer, ItCmdBufferSize, itCmdHandler, writeByteToClient, readByteFromClient);
+
+	getMillis = getCurrentMillis;
 }
 
 void appTick(void){
@@ -51,10 +54,12 @@ void appTick(void){
 
 static ItError itCmdHandler(double* result, unsigned long* timeStamp){
 	ItError err = ItError::NoError;
-	if(strcmp(itCmdBuffer, "desiredValue") == 0){
+	if(strcmp((char*)itCmdBuffer, "desiredValue") == 0){
 		*result = (double)getSquareWaveSignal();
+		*timeStamp = getMillis();
 	}else{
 		*result = 0;
+		*timeStamp = 0;
 		err = ItError::InvalidCommand;
 	}
 	return err;
