@@ -72,7 +72,7 @@ TEST_F(ControllerTest, hasI) {
 TEST_F(ControllerTest, pAndISumUp) {
 	const float DesiredValue = 3;
 	const float Kp = 42;
-	const float Ki = 0.23;
+	const float Ki = 0.23f;
 	
 	setControllerDesiredValue(DesiredValue);
 	setControllerActualValue(0.0);
