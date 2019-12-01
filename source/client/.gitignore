@@ -1,0 +1,4 @@
+# client (PyCharm project is excluded)
+.idea
+venv
+__pycache__
