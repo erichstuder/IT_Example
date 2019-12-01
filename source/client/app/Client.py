@@ -62,8 +62,11 @@ while True:
 
     data = comPortHandler.read()
     if data != b'':
-        print(data.decode("utf-8"), end='')
-        # print(data, end='')
+        # print(data.decode("utf-8"), end='')
+        print(data.hex() + ' ', end='')
+    # time.sleep(0.01)
+
+
     """
     try:
         data = comPortHandler.read()
