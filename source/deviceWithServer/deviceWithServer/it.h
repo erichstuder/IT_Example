@@ -18,19 +18,19 @@
 #ifndef IT_H
 #define IT_H
 
-enum class ItError {
-	NoError,
-	BufferFull,
-	ClientUnavailable,
-	ClientWriteError,
-	NoDataAvailable,
-	InvalidCommand,
-};
+typedef enum {
+	ItError_NoError,
+	ItError_BufferFull,
+	ItError_ClientUnavailable,
+	ItError_ClientWriteError,
+	ItError_NoDataAvailable,
+	ItError_InvalidCommand,
+}ItError_t;
 
-typedef ItError (*WriteByteToClient_t)(const unsigned char data);
-typedef ItError (*ReadByteFromClient_t)(unsigned char* const data);
-typedef ItError (*CmdHandler_t)(double* result, unsigned long* timeStamp);
-typedef ItError (*CmdBufferAppend_t)(const unsigned char dataByte);
+typedef ItError_t (*WriteByteToClient_t)(const unsigned char data);
+typedef ItError_t (*ReadByteFromClient_t)(unsigned char* const data);
+typedef ItError_t (*CmdHandler_t)(double* result, unsigned long* timeStamp);
+typedef ItError_t (*CmdBufferAppend_t)(const unsigned char dataByte);
 
 extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback);
 extern void (*itTick)(void);

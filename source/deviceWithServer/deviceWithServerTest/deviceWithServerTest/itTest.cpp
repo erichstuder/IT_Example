@@ -17,13 +17,15 @@
 
 #include "pch.h"
 
+extern "C" {
 #include "it.h"
+}
 
 const unsigned char ItCmdBufferSize = 30;
 unsigned char itCmdBuffer[ItCmdBufferSize];
 
 bool readByteFromClient_done;
-ItError readByteFromClient_error;
+ItError_t readByteFromClient_error;
 unsigned char readByteFromClient_buffer[256];
 unsigned char readByteFromClient_bytesLeft;
 const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', '\r' }; //no string-terminator
@@ -31,31 +33,31 @@ const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a
 unsigned char writeByteToClient_buffer[256];
 unsigned char writeByteToClient_bufferCount;
 
-static ItError writeByteToClient_Spy(const unsigned char data) {
+static ItError_t writeByteToClient_Spy(const unsigned char data) {
 	writeByteToClient_buffer[writeByteToClient_bufferCount] = data;
 	writeByteToClient_bufferCount++;
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
-static ItError readByteFromClient_Spy(unsigned char* const data) {
+static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	readByteFromClient_done = true;
 
 	if (readByteFromClient_bytesLeft)
 	{
 		readByteFromClient_bytesLeft--;
 		*data = readByteFromClient_buffer[readByteFromClient_bytesLeft];
-		return ItError::NoError;
+		return ItError_NoError;
 	}
 	else
 	{
-		return ItError::NoDataAvailable;
+		return ItError_NoDataAvailable;
 	}
 }
 
-static ItError cmdHandler_Spy(double* result, unsigned long* timeStamp) {
+static ItError_t cmdHandler_Spy(double* result, unsigned long* timeStamp) {
 	*result = 1.26f;
 	*timeStamp = 0xAABBCCDD;//TOOD: der Datentyp von Windows ist grösser als der vom Arduino!!
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
 
@@ -71,7 +73,7 @@ protected:
 
 		readByteFromClient_done = false;
 		readByteFromClient_bytesLeft = 0;
-		readByteFromClient_error = ItError::NoError;
+		readByteFromClient_error = ItError_NoError;
 
 		writeByteToClient_bufferCount = 0;
 	}
@@ -109,7 +111,7 @@ TEST_F(ItTest, handleCmd) {
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', ' a', 'n', 'd', 0x03, 0x00, 0x00, 0x00, 0xc0, 0xf5, 0x28, 0xf4, 0x3f, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x03, 0x00, 0x00, 0x00, 0xc0, 0xf5, 0x28, 0xf4, 0x3f, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}

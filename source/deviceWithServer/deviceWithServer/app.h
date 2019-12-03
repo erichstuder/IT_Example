@@ -18,7 +18,9 @@
 #ifndef APP_H
 #define APP_H
 
+extern "C" {
 #include "it.h"
+}
 
 #define APP_SAMPLETIME 1 //s
 

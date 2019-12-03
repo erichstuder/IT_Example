@@ -20,13 +20,16 @@
 #include "squareWave.h"
 #include "controller.h"
 #include "plant.h"
+
+extern "C" {
 #include "it.h"
+}
 
 static const unsigned char ItCmdBufferSize = 30;
 static unsigned char itCmdBuffer[ItCmdBufferSize];
 static GetCurrentMillis_t getMillis;
 
-static ItError itCmdHandler(double* result, unsigned long* timeStamp);
+static ItError_t itCmdHandler(double* result, unsigned long* timeStamp);
 
 void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
 	setSquareWaveTickTime(APP_SAMPLETIME);
@@ -52,15 +55,15 @@ void appTick(void){
 	itTick();
 }
 
-static ItError itCmdHandler(double* result, unsigned long* timeStamp){
-	ItError err = ItError::NoError;
+static ItError_t itCmdHandler(double* result, unsigned long* timeStamp){
+	ItError_t err = ItError_NoError;
 	if(strcmp((char*)itCmdBuffer, "desiredValue") == 0){
 		*result = (double)getSquareWaveSignal();
 		*timeStamp = getMillis();
 	}else{
 		*result = 0;
 		*timeStamp = 0;
-		err = ItError::InvalidCommand;
+		err = ItError_InvalidCommand;
 	}
 	return err;
 }

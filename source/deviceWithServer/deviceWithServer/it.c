@@ -16,13 +16,14 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 
 #include "it.h"
 //#include "arduino.h" //debug
 
-const unsigned char TelegramStart = 0xAA;
-const unsigned char TelegramEnd= 0xBB;
-const unsigned char ReplacementMarker = 0xCC;
+#define TelegramStart 0xAA
+#define TelegramEnd 0xBB
+#define ReplacementMarker 0xCC
 
 //#ifndef IT_CMD_BUFFER_SIZE
 //	#error IT_CMD_BUFFER_SIZE must be defined (including string terminator)
@@ -44,29 +45,29 @@ static CmdHandler_t cmdHandler;
 	unsigned int writeIndex;
 };*/
 
-enum class TelegramType {
-	SingleRequestAnswer = 0x01,
-	Logging             = 0x02,
-	Error               = 0x03,
-};
+typedef enum {
+	TelegramType_SingleRequestAnswer = 0x01,
+	TelegramType_Logging             = 0x02,
+	TelegramType_Error               = 0x03,
+} TelegramType_t;
 
-enum class ValueType {
-	Int8   = 0x01,
-	Uint8  = 0x02,
-	Double = 0x03,
-};
+typedef enum {
+	ValueType_Int8   = 0x01,
+	ValueType_Uint8  = 0x02,
+	ValueType_Double = 0x03,
+} ValueType_t;
 
-static ItError sendAnswer(void);
-static ItError sendContentByte(unsigned char data);
-static ItError sendTelegramStart(void);
-static ItError sendTelegramContent(void);
-static ItError sendTelegramType(TelegramType type);
-static ItError sendValueName(void);
-static ItError sendValueDataType(void);
-static ItError sendValue(double value);
-static ItError sendTelegramEnd(void);
-static ItError sendTimeStampOfValue(unsigned long timeStampOfValue);
-static ItError cmdBufferAppend(const char dataByte);
+static ItError_t sendAnswer(void);
+static ItError_t sendContentByte(unsigned char data);
+static ItError_t sendTelegramStart(void);
+static ItError_t sendTelegramContent(void);
+static ItError_t sendTelegramType(TelegramType_t type);
+static ItError_t sendValueName(void);
+static ItError_t sendValueDataType(void);
+static ItError_t sendValue(double value);
+static ItError_t sendTelegramEnd(void);
+static ItError_t sendTimeStampOfValue(unsigned long timeStampOfValue);
+static ItError_t cmdBufferAppend(const char dataByte);
 static void clearCmdBuffer(void);
 
 static void itInit_Implementation(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
@@ -84,16 +85,16 @@ void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHan
 static void itTick_Implementation(void){
 	//TODO: handle the errors
 	unsigned char dataByte;
-	ItError readByteError;
-	ItError cmdBufferError;
+	ItError_t readByteError;
+	ItError_t cmdBufferError;
 
 	do{
 		readByteError = readByteFromClient(&dataByte);
-		if(readByteError == ItError::NoDataAvailable){
+		if(readByteError == ItError_NoDataAvailable){
 			return;
-		}else if(readByteError == ItError::ClientUnavailable){
+		}else if(readByteError == ItError_ClientUnavailable){
 			return;
-		}else if(readByteError != ItError::NoError){
+		}else if(readByteError != ItError_NoError){
 			return;
 		}
 	
@@ -120,9 +121,9 @@ static void itTick_Implementation(void){
 			}*/
 		}else{
 			cmdBufferError = cmdBufferAppend(dataByte);
-			if(cmdBufferError == ItError::BufferFull){
+			if(cmdBufferError == ItError_BufferFull){
 				return;//TODO: inform client
-			}else if(cmdBufferError != ItError::NoError){
+			}else if(cmdBufferError != ItError_NoError){
 				return;
 			}
 		}
@@ -130,74 +131,75 @@ static void itTick_Implementation(void){
 }
 void (*itTick)(void) = itTick_Implementation;
 
-static ItError sendAnswer(void) {
-	ItError err = sendTelegramStart();
-	if (err != ItError::NoError) {
+static ItError_t sendAnswer(void) {
+	ItError_t err = sendTelegramStart();
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	err = sendTelegramContent();
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	return sendTelegramEnd();
 }
 
-static ItError sendTelegramStart(void) {
+static ItError_t sendTelegramStart(void) {
 	return writeByteToClient(TelegramStart);
 }
 
-static ItError sendTelegramContent(void) {//TODO: replace 0xAA and 0xBB by 0xCC and 0xAA-1 and 0xBB-1
-	ItError err;
+static ItError_t sendTelegramContent(void) {//TODO: replace 0xAA and 0xBB by 0xCC and 0xAA-1 and 0xBB-1
+	ItError_t err;
 
 	//Telegram definition: telegrammStartId, telegramType(data, error, ...), valueName, valueDataTypeId, value, timeStampOfValue, telegramStopId
-	err = sendTelegramType(TelegramType::SingleRequestAnswer);
-	if (err != ItError::NoError) {
+	err = sendTelegramType(TelegramType_SingleRequestAnswer);
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	double value;
 	unsigned long timeStampOfValue;
 	err = cmdHandler(&value, &timeStampOfValue);
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	err = sendValueName();
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	err = sendValueDataType();
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	err = sendValue(value);
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
 	err = sendTimeStampOfValue(timeStampOfValue);
-	if (err != ItError::NoError) {
+	if (err != ItError_NoError) {
 		return err;
 	}
 
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
-static ItError sendTelegramType(TelegramType type) {
+static ItError_t sendTelegramType(TelegramType_t type) {
 	return sendContentByte((unsigned char)type);//TODO: ist casten die saubere L�sung?
 }
 
-static ItError sendContentByte(unsigned char data) {
+static ItError_t sendContentByte(unsigned char data) {
+	ItError_t err;
 	switch (data) {
 		case TelegramStart:
 		case TelegramEnd:
 		case ReplacementMarker:
-			ItError err = writeByteToClient(ReplacementMarker);
-			if (err != ItError::NoError) {
+			err = writeByteToClient(ReplacementMarker);
+			if (err != ItError_NoError) {
 				return err;
 			}
 			data--;
@@ -206,56 +208,54 @@ static ItError sendContentByte(unsigned char data) {
 	return writeByteToClient(data);
 }
 
-static ItError sendValueName(void) {
-	ItError err;
+static ItError_t sendValueName(void) {
+	ItError_t err;
 	for (unsigned char n = 0; n < strlen((char*)cmdBuffer); n++) {
 		err = sendContentByte(cmdBuffer[n]);
-		if (err != ItError::NoError) {
+		if (err != ItError_NoError) {
 			return err;
 		}
 	}
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
-static ItError sendValueDataType(void) {
-	return sendContentByte((unsigned char)ValueType::Double);
+static ItError_t sendValueDataType(void) {
+	return sendContentByte((unsigned char)ValueType_Double);
 }
 
-static ItError sendValue(double value) {
-	const unsigned char ValueSize = sizeof(value);
+static ItError_t sendValue(double value) {
 	union {
 		double value;
-		unsigned char valueByteArray[ValueSize];
+		unsigned char valueByteArray[sizeof(double)];
 	} data;
 	data.value = value;
-	ItError err;
-	for (unsigned char n = 0; n < ValueSize; n++) {
+	ItError_t err;
+	for (unsigned char n = 0; n < sizeof(data.valueByteArray); n++) {
 		err = sendContentByte(data.valueByteArray[n]);
-		if (err != ItError::NoError) {
+		if (err != ItError_NoError) {
 			return err;
 		}
 	}
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
-static ItError sendTimeStampOfValue(unsigned long timeStampOfValue) {
-	const unsigned char StampSize = sizeof(timeStampOfValue);
+static ItError_t sendTimeStampOfValue(unsigned long timeStampOfValue) {
 	union {
 		unsigned long value;
-		unsigned char valueByteArray[StampSize];
+		unsigned char valueByteArray[sizeof(unsigned long)];
 	} data;
 	data.value = timeStampOfValue;
-	ItError err;
-	for (unsigned char n = 0; n < StampSize; n++) {
+	ItError_t err;
+	for (unsigned char n = 0; n < sizeof(data.valueByteArray); n++) {
 		err = sendContentByte(data.valueByteArray[n]);
-		if (err != ItError::NoError) {
+		if (err != ItError_NoError) {
 			return err;
 		}
 	}
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
-static ItError sendTelegramEnd(void) {
+static ItError_t sendTelegramEnd(void) {
 	return writeByteToClient(TelegramEnd);
 }
 
@@ -267,9 +267,9 @@ static void clearCmdBuffer(void) {
 	cmdBufferFull = false;
 }
 
-static ItError cmdBufferAppend(const char dataByte) {
+static ItError_t cmdBufferAppend(const char dataByte) {
 	if (cmdBufferFull == true) {
-		return ItError::BufferFull;
+		return ItError_BufferFull;
 	}
 	cmdBuffer[cmdBufferIndex] = dataByte;
 	if (cmdBufferIndex < cmdBufferSize - 2) { //leave last byte for zero terminator
@@ -278,7 +278,7 @@ static ItError cmdBufferAppend(const char dataByte) {
 	else {
 		cmdBufferFull = true;
 	}
-	return ItError::NoError;
+	return ItError_NoError;
 }
 
 

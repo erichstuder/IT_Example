@@ -21,7 +21,10 @@
 #include "squareWave.h"
 #include "controller.h"
 #include "plant.h"
+
+extern "C" {
 #include "it.h"
+}
 
 float squareWaveTickTime;
 float squareWaveFrequency;
@@ -103,18 +106,18 @@ static void plantTick_Spy(void) {
 }
 
 
-static ItError writeByteToClient_Spy(const unsigned char data) {
-	return ItError::NoError;
+static ItError_t writeByteToClient_Spy(const unsigned char data) {
+	return ItError_NoError;
 }
 
-static ItError readByteFromClient_Spy(unsigned char* const data) {
+static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	if (nrOfBytesToReadFromClient > 0) {
 		*data = byteToReadFromClient;
 		nrOfBytesToReadFromClient--;
-		return ItError::NoError;
+		return ItError_NoError;
 	}
 	else {
-		return ItError::NoDataAvailable;
+		return ItError_NoDataAvailable;
 	}
 }
 
@@ -309,7 +312,7 @@ TEST(AppTest_withIt, handleCmd) {
 	appInit(writeByteToClient_Spy, readByteFromClient_Spy, millis_Fake);
 
 	char cmd[] = "desiredValue";
-	ItError err;
+	ItError_t err;
 	for (int n = 0; n < strlen(cmd); n++) {
 		byteToReadFromClient = cmd[n];
 		nrOfBytesToReadFromClient = 1;
@@ -319,7 +322,7 @@ TEST(AppTest_withIt, handleCmd) {
 	double value = 0;
 	unsigned long timeStamp = 0;
 	err = itCmdHandler(&value, &timeStamp);
-	ASSERT_EQ(err, ItError::NoError);
+	ASSERT_EQ(err, ItError_NoError);
 	ASSERT_EQ(value, 10);
 	ASSERT_EQ(timeStamp, 33);
 }
@@ -328,7 +331,7 @@ TEST(AppTest_withIt, handleInvalidCmd) {
 	appInit(writeByteToClient_Spy, readByteFromClient_Spy, millis_Fake);
 
 	char cmd[] = "desiredValue42";
-	ItError err;
+	ItError_t err;
 	for (int n = 0; n < strlen(cmd); n++) {
 		byteToReadFromClient = cmd[n];
 		nrOfBytesToReadFromClient = 1;
@@ -338,7 +341,7 @@ TEST(AppTest_withIt, handleInvalidCmd) {
 	double value = 0;
 	unsigned long timeStamp = 0;
 	err = itCmdHandler(&value, &timeStamp);
-	ASSERT_EQ(err, ItError::InvalidCommand);
+	ASSERT_EQ(err, ItError_InvalidCommand);
 	ASSERT_EQ(value, 0.0f);
 	ASSERT_EQ(timeStamp, 0);
 }
