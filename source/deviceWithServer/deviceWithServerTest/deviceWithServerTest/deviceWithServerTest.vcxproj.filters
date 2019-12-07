@@ -12,6 +12,7 @@
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="..\..\deviceWithServer\it.c" />
+    <ClCompile Include="communicationTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

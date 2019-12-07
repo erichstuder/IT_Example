@@ -36,7 +36,10 @@
     <IncludePath>$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
+    <IncludePath>$(LOCALAPPDATA)\Programs\Python\Python38\include;$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LOCALAPPDATA)\Programs\Python\Python38\libs;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <ReferencePath>$(VC_ReferencesPath_x64);</ReferencePath>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -48,6 +51,7 @@
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />
+    <ClCompile Include="communicationTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
@@ -96,6 +100,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>copy "$(LOCALAPPDATA)\Programs\Python\Python38\python38_d.dll" "$(TargetDir)python38_d.dll"
+copy "$(ProjectDir)..\..\..\client\app\TelegramParser.py" "$(TargetDir)TelegramParser.py"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
