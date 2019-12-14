@@ -28,7 +28,7 @@ Test List:
 """
 
 
-def test_parseEmptyTelegramWithoutEnd(mocker):
+def test_parseEmptyTelegramWithoutEnd():
     noEndReceived = mock.Mock()
     telegramParser = TelegramParser(noEndReceived)
     telegramParser.parse(0xAA)
