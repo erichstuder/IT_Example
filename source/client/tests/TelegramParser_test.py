@@ -16,6 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 from app.TelegramParser import TelegramParser
+import pytest
 import mock
 
 """
@@ -25,16 +26,96 @@ Test List:
 - entfernen von 0xCC
 - übergabe von nicht byte grossem wert muss zu fehler führen
 - soll nur unsigned char akzeptiert werden? also keine negativen werte?
+
+- 
 """
 
 
-def test_parseEmptyTelegramWithoutEnd():
-    noEndReceived = mock.Mock()
-    telegramParser = TelegramParser(noEndReceived)
-    telegramParser.parse(0xAA)
-    noEndReceived.assert_not_called()
-    telegramParser.parse(0xAA)
-    noEndReceived.assert_called_once()
+class TestTelegramParser:
+    telegramParser = None
+    invalidTelegramReceived = None
 
-    telegramParser.parse(0xAA)
-    assert noEndReceived.call_count == 2
+    def setup_method(self):
+        self.invalidTelegramReceived = mock.Mock()
+        self.telegramParser = TelegramParser(self.invalidTelegramReceived)
+
+    def test_parseEmptyTelegramWithoutEnd(self):
+        self.__parseStart()
+        self.invalidTelegramReceived.assert_not_called()
+
+        self.__parseStart()
+        self.invalidTelegramReceived.assert_called_once()
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA]})
+
+        self.__parseStart()
+        assert self.invalidTelegramReceived.call_count == 2
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA]})
+
+    def test_parseEmptyTelegram(self):
+        self.__parseStart()
+        self.invalidTelegramReceived.assert_not_called()
+        self.__parseEnd()
+        self.invalidTelegramReceived.assert_called_once()
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA], 'telegramEnd': [0xBB]})
+
+        self.__parseStart()
+        self.invalidTelegramReceived.assert_called_once()
+        self.__parseEnd()
+        assert self.invalidTelegramReceived.call_count == 2
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA], 'telegramEnd': [0xBB]})
+
+    def test_startAfterTelegramType(self):
+        self.__parseStart()
+        TelegramType = 0x01
+        self.__parseTelegramType(TelegramType)
+        self.invalidTelegramReceived.assert_not_called()
+        self.__parseStart()
+        self.invalidTelegramReceived.assert_called_once()
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA], 'telegramType': [TelegramType]})
+
+    def test_invalidTelegramType(self):
+        self.__parseStart()
+        TelegramType = 0x67
+        self.__parseTelegramType(TelegramType)
+        self.invalidTelegramReceived.assert_called_once()
+        self.invalidTelegramReceived.assert_called_with({'telegramStart': [0xAA], 'telegramType': [TelegramType]})
+
+    def test_emptyValueName(self):
+        self.__setupForParsingValueName()
+        self.__parseValueName('')
+        self.invalidTelegramReceived.assert_not_called()
+
+    def test_valueName(self):
+        self.__setupForParsingValueName()
+        self.__parseValueName('myValueName')
+        self.invalidTelegramReceived.assert_not_called()
+
+    def test_tooLongValueName(self):
+        self.__setupForParsingValueName()
+        tenChars = '0123456789'
+        fiftyChars = tenChars + tenChars + tenChars + tenChars + tenChars
+        chars102 = fiftyChars + fiftyChars + 'eg'
+        self.__parseValueName(chars102)
+        self.invalidTelegramReceived.assert_called_once()
+        expectedTelegram = {'telegramStart': [0xAA], 'telegramType': [0x01], 'valueName': list(chars102[:100])}
+        self.invalidTelegramReceived.assert_called_with(expectedTelegram)
+
+    def __parseStart(self):
+        self.telegramParser.parse(0xAA)
+
+    def __parseEnd(self):
+        self.telegramParser.parse(0xBB)
+
+    def __parseTelegramType(self, telegramType):
+        self.telegramParser.parse(telegramType)
+
+    def __parseValueName(self, name):
+        for x in name:
+            self.telegramParser.parse(x)
+
+    def __assertInvalidTelegramCallbackNotCalled(self):
+        self.invalidTelegramReceived.assert_not_called()
+
+    def __setupForParsingValueName(self):
+        self.__parseStart()
+        self.__parseTelegramType(telegramType=0x01)
