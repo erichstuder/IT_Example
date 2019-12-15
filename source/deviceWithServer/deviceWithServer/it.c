@@ -80,7 +80,13 @@ static void itInit_Implementation(unsigned char* itCmdBuffer, unsigned char itCm
 	readByteFromClient = readByteFromClientCallback;
 	cmdHandler = cmdHandlerCallback;
 }
+#ifdef ITLIBRARY_EXPORTS
+__declspec(dllexport) void itInit(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
+	itInit_Implementation(itCmdBuffer, itCmdBufferSize, cmdHandlerCallback, writeByteToClientCallback, readByteFromClientCallback);
+}
+#else
 void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) = itInit_Implementation;
+#endif
 
 static void itTick_Implementation(void){
 	//TODO: handle the errors
@@ -129,7 +135,13 @@ static void itTick_Implementation(void){
 		}
 	}while(true);
 }
+#ifdef ITLIBRARY_EXPORTS
+__declspec(dllexport) void itTick(void) {
+	itTick_Implementation();
+}
+#else
 void (*itTick)(void) = itTick_Implementation;
+#endif
 
 static ItError_t sendAnswer(void) {
 	ItError_t err = sendTelegramStart();

@@ -32,7 +32,11 @@ typedef ItError_t (*ReadByteFromClient_t)(unsigned char* const data);
 typedef ItError_t (*CmdHandler_t)(double* result, unsigned long* timeStamp);
 typedef ItError_t (*CmdBufferAppend_t)(const unsigned char dataByte);
 
+#ifdef ITLIBRARY_EXPORTS
+//nothing to do
+#else
 extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback);
 extern void (*itTick)(void);
+#endif
 
-#endif //IT_H
+#endif
