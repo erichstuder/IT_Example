@@ -24,65 +24,99 @@ class TelegramParser:
     __TelegramStartId = 0xAA
     __TelegramEndId = 0xBB
 
+    __TelegramType_SingleRequestAnswer = 0x01
+
+    __telegramRaw = []
     __telegram = {}
 
-    class ParserState(Enum):
-        WaitingForStart = 1
-        WaitingForTelegramType = 2
-        ReadingValueName = 3
-        WaitingForEnd = 4
-
-    def __init__(self, invalidTelegramCallback):
-        self.state = self.ParserState.WaitingForStart
-        self.invalidTelegramCallback = invalidTelegramCallback
+    def __init__(self, telegramReceivedCallback, invalidTelegramCallback):
+        self.__telegramReceivedCallback = telegramReceivedCallback
+        self.__invalidTelegramCallback = invalidTelegramCallback
+        self.__telegramRaw.clear()
 
     def parse(self, byte):
-        if byte == self.__TelegramStartId:
-            self.__handleTelegramStart(byte)
-        elif byte == self.__TelegramEndId:
-            self.__handleTelegramEnd(byte)
-        elif self.state == self.ParserState.WaitingForTelegramType:
-            self.__handleTelegramType(byte)
-        elif self.state == self.ParserState.ReadingValueName:
-            self.__handleValueName(byte)
+        if byte == self.__TelegramStartId and len(self.__telegramRaw) != 0:
+            self.__parseTelegram()
+        self.__telegramRaw.append(byte)
+        if byte == self.__TelegramEndId:
+            self.__parseTelegram()
 
-    def __handleTelegramStart(self, byte):
-        self.__handleUnexpectedStateTransition(expectedState=self.ParserState.WaitingForStart)
-        self.__startTelegramParsing()
-        self.state = self.ParserState.WaitingForTelegramType
+        # elif self.state == self.ParserState.WaitingForTelegramType:
+        #     self.__handleTelegramType(byte)
+        # elif self.state == self.ParserState.ReadingValueName:
+        #     self.__handleValueName(byte)
+        # elif self.state == self.ParserState.ReadingValueType:
+        #     self.__handleValueType(byte)
+
+    def __parseTelegram(self):
+        self.__telegram.clear()
+        try:
+            self.__handleTelegramStart(index=0)
+            self.__handleTelegramType(index=1)
+            valueNameLength = self.__handleValueName(index=2)
+            valueLength = self.__handleValueType(index=valueNameLength+3)
+            totalOffset = valueNameLength + (valueLength - 1)
+            self.__handleValue(index=totalOffset+4)
+            self.__handleTimestamp(index=totalOffset+5)
+            self.__telegramReceivedCallback(self.__telegram.copy())
+        except (IndexError, ValueError):
+            self.__handleInvalidTelegram()
+        finally:
+            self.__telegramRaw.clear()
+
+    def __handleTelegramStart(self, index):
+        if self.__telegramRaw[index] != self.__TelegramStartId:
+            raise ValueError
+
+    def __handleTelegramType(self, index):
+        byte = self.__telegramRaw[index]
+        if byte == self.__TelegramType_SingleRequestAnswer:
+            self.__telegram['telegramType'] = byte
+            return 1
+        else:
+            raise ValueError
+
+    def __handleValueName(self, index):
+        byte = self.__telegramRaw[index]
+        if 'valueName' not in self.__telegram:
+            self.__telegram['valueName'] = ''
+        if byte == '\0':
+            return 0
+        else:
+            self.__telegram['valueName'] += str(byte)
+            return self.__handleValueName(index + 1) + 1
+
+    def __handleValueType(self, index):
+        self.__telegram['valueType'] = self.__telegramRaw[index]
+        return 1
+
+    def __handleValue(self, index):
+        self.__telegram['value'] = self.__telegramRaw[index]
+
+    def __handleTimestamp(self, index):
+        self.__telegram['timestamp'] = int.from_bytes(self.__telegramRaw[index:index+4], byteorder='big', signed=False)
 
     def __handleTelegramEnd(self, byte):
-        self.__appendToTelegram('telegramEnd', byte)
-        self.__handleUnexpectedStateTransition(expectedState=self.ParserState.WaitingForEnd)
-        self.state = self.ParserState.WaitingForStart
+        self.__telegram['telegramEnd'] = byte
 
-    def __handleTelegramType(self, byte):
-        self.__appendToTelegram('telegramType', byte)
-        if byte == 0x67:
-            self.__handleInvalidTelegram()
-        else:
-            self.state = self.ParserState.ReadingValueName
+    # self.__appendToTelegram('telegramType', byte)
+    # if byte == 0x67:
+    #     self.__handleInvalidTelegram()
+    # else:
+    #     self.state = self.ParserState.ReadingValueName
 
-    def __handleValueName(self, byte):
-        self.__appendToTelegram('valueName', byte)
-        if len(self.telegram['valueName']) >= 100:
-            self.__handleInvalidTelegram()
-        # if byte != '\0':
-        #     self.state = self.ParserState.ReadingValueDataType
-
-    def __handleUnexpectedStateTransition(self, expectedState):
-        if self.state != expectedState:
-            self.__handleInvalidTelegram()
+    # def __handleUnexpectedStateTransition(self, expectedState):
+    #     if self.state != expectedState:
+    #         self.__handleInvalidTelegram()
 
     def __handleInvalidTelegram(self):
-        self.invalidTelegramCallback(dict(self.telegram))
-        self.state = self.ParserState.WaitingForStart
+        self.__invalidTelegramCallback(self.__telegramRaw.copy())
 
-    def __startTelegramParsing(self):
-        self.telegram = {'telegramStart': [self.__TelegramStartId]}
+    # def __startTelegramParsing(self):
+    #     self.telegram = {'telegramStart': [self.__TelegramStartId]}
 
-    def __appendToTelegram(self, field, byte):
-        if field in self.telegram:
-            self.telegram[field].append(byte)
-        else:
-            self.telegram[field] = [byte]
+    # def __appendToTelegram(self, field, byte):
+    #     if field in self.__telegram:
+    #         self.__telegram[field].append(byte)
+    #     else:
+    #         self.__telegram[field] = [byte]
