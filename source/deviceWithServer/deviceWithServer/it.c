@@ -63,7 +63,7 @@ static ItError_t sendTelegramStart(void);
 static ItError_t sendTelegramContent(void);
 static ItError_t sendTelegramType(TelegramType_t type);
 static ItError_t sendValueName(void);
-static ItError_t sendValueDataType(void);
+static ItError_t sendValueType(void);
 static ItError_t sendValue(double value);
 static ItError_t sendTelegramEnd(void);
 static ItError_t sendTimeStampOfValue(unsigned long timeStampOfValue);
@@ -182,7 +182,7 @@ static ItError_t sendTelegramContent(void) {//TODO: replace 0xAA and 0xBB by 0xC
 		return err;
 	}
 
-	err = sendValueDataType();
+	err = sendValueType();
 	if (err != ItError_NoError) {
 		return err;
 	}
@@ -231,7 +231,7 @@ static ItError_t sendValueName(void) {
 	return ItError_NoError;
 }
 
-static ItError_t sendValueDataType(void) {
+static ItError_t sendValueType(void) {
 	return sendContentByte((unsigned char)ValueType_Double);
 }
 
