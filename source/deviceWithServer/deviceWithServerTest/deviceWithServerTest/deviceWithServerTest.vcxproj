@@ -51,7 +51,6 @@
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />
-    <ClCompile Include="communicationTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
