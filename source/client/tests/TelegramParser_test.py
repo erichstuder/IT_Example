@@ -20,18 +20,12 @@ import mock
 
 """
 Test List:
-- parse function
-- error callback wenn mittendrin 0xAA
 - entfernen von 0xCC
-- übergabe von nicht byte grossem wert muss zu fehler führen
-- soll nur unsigned char akzeptiert werden? also keine negativen werte?
-
-- 
 """
 
 
 class TestTelegramParser:
-    __ValidTelegram = [0xAA, 0x01] + list('myValueName\0') + [0x01, 0x42, 0x04, 0x03, 0x02, 0x01, 0xBB]
+    __ValidTelegram = [0xAA, 0x01] + list('myValueName\0') + [0x01, 0xCC, 0xBA, 0x04, 0x03, 0x02, 0x01, 0xBB]
 
     def setup_method(self):
         self.invalidTelegram = mock.Mock()
@@ -44,9 +38,7 @@ class TestTelegramParser:
         self.invalidTelegram.assert_not_called()
 
         self.__parseStart()
-        self.telegramReceived.assert_not_called()
-        self.invalidTelegram.assert_called_once()
-        self.invalidTelegram.assert_called_with([0xAA])
+        self.__assertInvalidTelegram([0xAA])
 
         self.__parseStart()
         self.telegramReceived.assert_not_called()
@@ -58,9 +50,7 @@ class TestTelegramParser:
         self.telegramReceived.assert_not_called()
         self.invalidTelegram.assert_not_called()
         self.__parseEnd()
-        self.telegramReceived.assert_not_called()
-        self.invalidTelegram.assert_called_once()
-        self.invalidTelegram.assert_called_with([0xAA, 0xBB])
+        self.__assertInvalidTelegram([0xAA, 0xBB])
 
         self.__parseStart()
         self.telegramReceived.assert_not_called()
@@ -77,57 +67,40 @@ class TestTelegramParser:
         self.telegramReceived.assert_not_called()
         self.invalidTelegram.assert_not_called()
         self.__parseStart()
-        self.telegramReceived.assert_not_called()
-        self.invalidTelegram.assert_called_once()
-        self.invalidTelegram.assert_called_with([0xAA, TelegramType])
+        self.__assertInvalidTelegram([0xAA, TelegramType])
 
     def test_invalidTelegramType(self):
         telegram = self.__telegramWithField('telegramType', 0x67)
         self.__parseTelegram(telegram)
-        self.telegramReceived.assert_not_called()
-        self.invalidTelegram.assert_called_once()
-        self.invalidTelegram.assert_called_with(telegram)
+        self.__assertInvalidTelegram(telegram)
 
     def test_emptyValueName(self):
         telegram = self.__telegramWithField('valueName', '')
         self.__parseTelegram(telegram)
-        self.telegramReceived.assert_not_called()
-        self.invalidTelegram.assert_called_once()
-        self.invalidTelegram.assert_called_with(telegram)
+        self.__assertInvalidTelegram(telegram)
 
     def test_emptyValueNameTerminated(self):
         telegram = self.__telegramWithField('valueName', '\0')
         self.__parseTelegram(telegram)
-        self.telegramReceived.assert_called_once()
-        expectedTelegram = {'telegramType': 0x01, 'valueName': '', 'valueType': 0x01, 'value': 0x42,
+        expectedTelegram = {'telegramType': 0x01, 'valueName': '', 'valueType': 0x01, 'value': 0xBB,
                             'timestamp': 0x04030201}
-        self.telegramReceived.assert_called_with(expectedTelegram)
-        self.invalidTelegram.assert_not_called()
+        self.__assertValidTelegram(expectedTelegram)
 
-    # def test_valueName(self):
-    #     self.__setupForParsingValueName()
-    #     self.__parseValueName('myValueName')
-    #     self.invalidTelegram.assert_not_called()
-    #
-    # def test_tooLongValueName(self):
-    #     self.__setupForParsingValueName()
-    #     tenChars = '0123456789'
-    #     fiftyChars = tenChars + tenChars + tenChars + tenChars + tenChars
-    #     chars102 = fiftyChars + fiftyChars + 'eg'
-    #     self.__parseValueName(chars102)
-    #     self.invalidTelegram.assert_called_once()
-    #     self.invalidTelegram.assert_called_with([0xAA, 0x01, list(chars102[:100])])
-    #
-    # def test_invalidValueType(self):
-    #     self.__setupForParsingValueType()
-    #     ValueType = 0x33
-    #     self.telegramParser.parse(ValueType)
-    #     self.invalidTelegram.assert_called_once()
-    #     expectedTelegram = [0xAA, 0x01, list('randomValueName\0'), ValueType]
-    #     self.invalidTelegram.assert_called_with(expectedTelegram)
-    #
-    # def test_invalidValueLength(self):
-    #     pass
+    def test_invalidValueType(self):
+        telegram = self.__telegramWithField('valueType', 0x33)
+        self.__parseTelegram(telegram)
+        self.__assertInvalidTelegram(telegram)
+
+    def test_tooLongTelegram(self):
+        tooLongTelegram = self.__ValidTelegram[0:-1] + [0xEE] + [self.__ValidTelegram[-1]]
+        self.__parseTelegram(tooLongTelegram)
+        self.__assertInvalidTelegram(tooLongTelegram)
+
+    def test_validTelegram(self):
+        self.__parseTelegram(self.__ValidTelegram)
+        expectedTelegram = {'telegramType': 0x01, 'valueName': 'myValueName', 'valueType': 0x01, 'value': 0xBB,
+                            'timestamp': 0x04030201}
+        self.__assertValidTelegram(expectedTelegram)
 
     def __parseStart(self):
         self.telegramParser.parse(0xAA)
@@ -155,11 +128,22 @@ class TestTelegramParser:
                 stringReverse = value[::-1]
                 while stringReverse != '\0':
                     telegram.insert(2, stringReverse[0])
-                    del stringReverse[0]
+                    stringReverse = stringReverse[1:]
             else:
                 del telegram[2]
-
+        elif field == 'valueType':
+            telegram[telegram[2:].index('\0') + 2 + 1] = value
         return telegram
+
+    def __assertInvalidTelegram(self, parsedData):
+        self.telegramReceived.assert_not_called()
+        self.invalidTelegram.assert_called_once()
+        self.invalidTelegram.assert_called_with(parsedData)
+
+    def __assertValidTelegram(self, expectedTelegram):
+        self.telegramReceived.assert_called_once()
+        self.telegramReceived.assert_called_with(expectedTelegram)
+        self.invalidTelegram.assert_not_called()
 
     # def __parseValueName(self, name):
     #     for x in name:

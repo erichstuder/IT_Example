@@ -23,9 +23,11 @@ from enum import Enum
 class TelegramParser:
     __TelegramStartId = 0xAA
     __TelegramEndId = 0xBB
+    __ReplacementMarker = 0xCC
 
     __TelegramType_SingleRequestAnswer = 0x01
 
+    __telegramRawOriginal = []
     __telegramRaw = []
     __telegram = {}
 
@@ -51,6 +53,8 @@ class TelegramParser:
     def __parseTelegram(self):
         self.__telegram.clear()
         try:
+            self.__telegramRawOriginal = self.__telegramRaw.copy()
+            self.__handleReplacementMarkers()
             self.__handleTelegramStart(index=0)
             self.__handleTelegramType(index=1)
             valueNameLength = self.__handleValueName(index=2)
@@ -58,11 +62,22 @@ class TelegramParser:
             totalOffset = valueNameLength + (valueLength - 1)
             self.__handleValue(index=totalOffset+4)
             self.__handleTimestamp(index=totalOffset+5)
+            self.__handleTelegramEnd(index=totalOffset+9)
             self.__telegramReceivedCallback(self.__telegram.copy())
         except (IndexError, ValueError):
             self.__handleInvalidTelegram()
         finally:
             self.__telegramRaw.clear()
+
+    def __handleReplacementMarkers(self, startIndex=0):
+        if startIndex >= len(self.__telegramRaw):
+            pass
+        elif self.__telegramRaw[startIndex] == self.__ReplacementMarker:
+            self.__telegramRaw[startIndex+1] += 1
+            del self.__telegramRaw[startIndex]
+            self.__handleReplacementMarkers(startIndex+2)
+        else:
+            self.__handleReplacementMarkers(startIndex+1)
 
     def __handleTelegramStart(self, index):
         if self.__telegramRaw[index] != self.__TelegramStartId:
@@ -87,7 +102,11 @@ class TelegramParser:
             return self.__handleValueName(index + 1) + 1
 
     def __handleValueType(self, index):
-        self.__telegram['valueType'] = self.__telegramRaw[index]
+        byte = self.__telegramRaw[index]
+        if byte == 0x01:
+            self.__telegram['valueType'] = byte
+        else:
+            raise ValueError
         return 1
 
     def __handleValue(self, index):
@@ -96,8 +115,11 @@ class TelegramParser:
     def __handleTimestamp(self, index):
         self.__telegram['timestamp'] = int.from_bytes(self.__telegramRaw[index:index+4], byteorder='big', signed=False)
 
-    def __handleTelegramEnd(self, byte):
-        self.__telegram['telegramEnd'] = byte
+    def __handleTelegramEnd(self, index):
+        if self.__telegramRaw[index] != self.__TelegramEndId:
+            raise ValueError
+        if len(self.__telegramRaw) != index + 1:
+            raise ValueError
 
     # self.__appendToTelegram('telegramType', byte)
     # if byte == 0x67:
@@ -110,7 +132,7 @@ class TelegramParser:
     #         self.__handleInvalidTelegram()
 
     def __handleInvalidTelegram(self):
-        self.__invalidTelegramCallback(self.__telegramRaw.copy())
+        self.__invalidTelegramCallback(self.__telegramRawOriginal)
 
     # def __startTelegramParsing(self):
     #     self.telegram = {'telegramStart': [self.__TelegramStartId]}
