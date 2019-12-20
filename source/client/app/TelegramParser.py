@@ -95,10 +95,10 @@ class TelegramParser:
         byte = self.__telegramRaw[index]
         if 'valueName' not in self.__telegram:
             self.__telegram['valueName'] = ''
-        if byte == '\0':
+        if byte == ord('\0'):
             return 0
         else:
-            self.__telegram['valueName'] += str(byte)
+            self.__telegram['valueName'] += chr(byte)
             return self.__handleValueName(index + 1) + 1
 
     def __handleValueType(self, index):
