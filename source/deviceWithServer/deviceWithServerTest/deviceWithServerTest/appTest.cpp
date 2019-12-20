@@ -319,12 +319,12 @@ TEST(AppTest_withIt, handleCmd) {
 		appTick();
 	}
 
-	double value = 0;
-	unsigned long timeStamp = 0;
-	err = itCmdHandler(&value, &timeStamp);
+	ItCommandResult_t result;
+	err = itCmdHandler(&result);
 	ASSERT_EQ(err, ItError_NoError);
-	ASSERT_EQ(value, 10);
-	ASSERT_EQ(timeStamp, 33);
+	ASSERT_EQ(result.valueType, ValueType_Float);
+	ASSERT_EQ(result.valueFloat, 10);
+	ASSERT_EQ(result.timestamp, 33);
 }
 
 TEST(AppTest_withIt, handleInvalidCmd) {
@@ -338,10 +338,8 @@ TEST(AppTest_withIt, handleInvalidCmd) {
 		appTick();
 	}
 
-	double value = 0;
-	unsigned long timeStamp = 0;
-	err = itCmdHandler(&value, &timeStamp);
+	ItCommandResult_t result;
+	err = itCmdHandler(&result);
 	ASSERT_EQ(err, ItError_InvalidCommand);
-	ASSERT_EQ(value, 0.0f);
-	ASSERT_EQ(timeStamp, 0);
+	ASSERT_EQ(result.timestamp, 0);
 }

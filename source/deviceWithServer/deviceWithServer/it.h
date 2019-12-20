@@ -25,11 +25,28 @@ typedef enum {
 	ItError_ClientWriteError,
 	ItError_NoDataAvailable,
 	ItError_InvalidCommand,
+	ItError_InvalidValueType
 }ItError_t;
+
+typedef enum {
+	ValueType_Int8 = 0x01,
+	ValueType_Uint8 = 0x02,
+	ValueType_Float = 0x03,
+} ValueType_t;
+
+typedef struct {
+	ValueType_t valueType;
+	union {
+		signed char valueInt8;
+		unsigned char valueUint8;
+		float valueFloat;
+	};
+	unsigned long timestamp;
+}ItCommandResult_t;
 
 typedef ItError_t (*WriteByteToClient_t)(const unsigned char data);
 typedef ItError_t (*ReadByteFromClient_t)(unsigned char* const data);
-typedef ItError_t (*CmdHandler_t)(double* result, unsigned long* timeStamp);
+typedef ItError_t (*CmdHandler_t)(ItCommandResult_t* result);
 typedef ItError_t (*CmdBufferAppend_t)(const unsigned char dataByte);
 
 #ifdef ITLIBRARY_EXPORTS

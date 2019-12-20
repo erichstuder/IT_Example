@@ -51,20 +51,14 @@ typedef enum {
 	TelegramType_Error               = 0x03,
 } TelegramType_t;
 
-typedef enum {
-	ValueType_Int8   = 0x01,
-	ValueType_Uint8  = 0x02,
-	ValueType_Double = 0x03,
-} ValueType_t;
-
 static ItError_t sendAnswer(void);
 static ItError_t sendContentByte(unsigned char data);
 static ItError_t sendTelegramStart(void);
 static ItError_t sendTelegramContent(void);
 static ItError_t sendTelegramType(TelegramType_t type);
 static ItError_t sendValueName(void);
-static ItError_t sendValueType(void);
-static ItError_t sendValue(double value);
+static ItError_t sendValueType(ValueType_t valueType);
+static ItError_t sendValue(const ItCommandResult_t* const result);
 static ItError_t sendTelegramEnd(void);
 static ItError_t sendTimeStampOfValue(unsigned long timeStampOfValue);
 static ItError_t cmdBufferAppend(const char dataByte);
@@ -170,9 +164,8 @@ static ItError_t sendTelegramContent(void) {//TODO: replace 0xAA and 0xBB by 0xC
 		return err;
 	}
 
-	double value;
-	unsigned long timeStampOfValue;
-	err = cmdHandler(&value, &timeStampOfValue);
+	ItCommandResult_t result;
+	err = cmdHandler(&result);
 	if (err != ItError_NoError) {
 		return err;
 	}
@@ -182,17 +175,17 @@ static ItError_t sendTelegramContent(void) {//TODO: replace 0xAA and 0xBB by 0xC
 		return err;
 	}
 
-	err = sendValueType();
+	err = sendValueType(result.valueType);
 	if (err != ItError_NoError) {
 		return err;
 	}
 
-	err = sendValue(value);
+	err = sendValue(&result);
 	if (err != ItError_NoError) {
 		return err;
 	}
 
-	err = sendTimeStampOfValue(timeStampOfValue);
+	err = sendTimeStampOfValue(result.timestamp);
 	if (err != ItError_NoError) {
 		return err;
 	}
@@ -231,22 +224,38 @@ static ItError_t sendValueName(void) {
 	return ItError_NoError;
 }
 
-static ItError_t sendValueType(void) {
-	return sendContentByte((unsigned char)ValueType_Double);
+static ItError_t sendValueType(ValueType_t valueType) {
+	return sendContentByte(valueType);
 }
 
-static ItError_t sendValue(double value) {
-	union {
-		double value;
-		unsigned char valueByteArray[sizeof(double)];
-	} data;
-	data.value = value;
+static ItError_t sendValue(const ItCommandResult_t* const result) {
 	ItError_t err;
-	for (unsigned char n = 0; n < sizeof(data.valueByteArray); n++) {
-		err = sendContentByte(data.valueByteArray[n]);
+	unsigned char* value;
+	switch (result->valueType) {
+	case ValueType_Int8:
+		err = sendContentByte(result->valueInt8);
 		if (err != ItError_NoError) {
 			return err;
 		}
+		break;
+	case ValueType_Uint8:
+		err = sendContentByte(result->valueUint8);
+		if (err != ItError_NoError) {
+			return err;
+		}
+		break;
+	case ValueType_Float:
+		value = (unsigned char*)&(result->valueFloat);
+		for (unsigned char n = 0; n < sizeof(float); n++) {
+			err = sendContentByte(*value);
+			value++;
+			if (err != ItError_NoError) {
+				return err;
+			}
+		}
+		break;
+	default:
+		return ItError_InvalidValueType;
 	}
 	return ItError_NoError;
 }

@@ -54,9 +54,22 @@ static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	}
 }
 
-static ItError_t cmdHandler_Spy(double* result, unsigned long* timeStamp) {
-	*result = 1.26f;
-	*timeStamp = 0xAABBCCDD;//TOOD: der Datentyp von Windows ist grösser als der vom Arduino!!
+static ItError_t cmdHandler_Spy(ItCommandResult_t* result) {
+	if (readByteFromClient_buffer[1] == 'A') {
+		result->valueType = ValueType_Uint8;
+		result->valueInt8 = 0x45;
+		result->timestamp = 0x12345678;
+	}
+	else if (readByteFromClient_buffer[1] == 'B') {
+		result->valueType = ValueType_Float;
+		result->valueFloat = 1.26f;
+		result->timestamp = 0xAA99CCDD;
+	}
+	else {
+		result->valueType = ValueType_Int8;
+		result->valueInt8 = 0x11;
+		result->timestamp = 0xAABBCCDD;//TOOD: der Datentyp von Windows ist grösser als der vom Arduino!!
+	}
 	return ItError_NoError;
 }
 
@@ -103,7 +116,7 @@ TEST_F(ItTest, appendToBuffer) {
 	ASSERT_EQ(itCmdBuffer[0], 'E');
 }
 
-TEST_F(ItTest, handleCmd) {
+TEST_F(ItTest, handleCmdInt8) {
 	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
 		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand)-1-n]; //fill the other way round
 	}
@@ -111,9 +124,34 @@ TEST_F(ItTest, handleCmd) {
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x03, 0x00, 0x00, 0x00, 0xc0, 0xf5, 0x28, 0xf4, 0x3f, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x01, 0x11, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
-	//(itCmdBuffer[0], 'E');
+}
+
+TEST_F(ItTest, handleCmdUint8) {
+	readByteFromClient_buffer[0] = '\r';
+	readByteFromClient_buffer[1] = 'A';
+	readByteFromClient_bytesLeft = 2;
+
+	itTick();
+
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'A', 0x02, 0x45, 0x78, 0x56, 0x34, 0x12, 0xBB };
+	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
+		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+	}
+}
+
+TEST_F(ItTest, handleCmdFloat) {
+	readByteFromClient_buffer[0] = '\r';
+	readByteFromClient_buffer[1] = 'B';
+	readByteFromClient_bytesLeft = 2;
+
+	itTick();
+
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'B', 0x03, 0xAE, 0x47, 0XA1, 0x3F, 0xDD, 0xCC, 0xCB, 0x99, 0xCC, 0xA9, 0xBB };
+	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
+		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+	}
 }

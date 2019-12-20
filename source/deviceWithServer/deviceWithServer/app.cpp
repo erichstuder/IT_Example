@@ -29,7 +29,7 @@ static const unsigned char ItCmdBufferSize = 30;
 static unsigned char itCmdBuffer[ItCmdBufferSize];
 static GetCurrentMillis_t getMillis;
 
-static ItError_t itCmdHandler(double* result, unsigned long* timeStamp);
+static ItError_t itCmdHandler(ItCommandResult_t* result);
 
 void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
 	setSquareWaveTickTime(APP_SAMPLETIME);
@@ -55,14 +55,14 @@ void appTick(void){
 	itTick();
 }
 
-static ItError_t itCmdHandler(double* result, unsigned long* timeStamp){
+static ItError_t itCmdHandler(ItCommandResult_t* result){
 	ItError_t err = ItError_NoError;
 	if(strcmp((char*)itCmdBuffer, "desiredValue") == 0){
-		*result = (double)getSquareWaveSignal();
-		*timeStamp = getMillis();
+		result->valueType = ValueType_Float;
+		result->valueFloat = (float)getSquareWaveSignal();
+		result->timestamp = getMillis();
 	}else{
-		*result = 0;
-		*timeStamp = 0;
+		result->timestamp = 0;
 		err = ItError_InvalidCommand;
 	}
 	return err;
