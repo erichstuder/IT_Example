@@ -19,9 +19,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import time
 import serial  # install pyserial to gain access
 import sys
+import os
 import queue
-from ComPortHandler import ComPortHandler
+from app.ComPortHandler import ComPortHandler
+from app.TextFileViewer import TextFileViewer
+import app.Preferences as Preferences
+from app.TelegramParser import TelegramParser
 import threading
+from datetime import datetime
 
 """
 def handleComPortInput(data):
@@ -39,6 +44,23 @@ def __inputReaderWorker():
         inputQueue.put(input())
 
 
+def __telegramReceived(telegram):
+    with open(activeSession, 'a+') as logFile:
+        logFile.write(datetime.today().strftime('%d.%m.%Y %H:%M:%S\n'))
+        logFile.write(str(telegram) + '\n')
+        logFile.write(telegram['valueName'] + ': ' + str(telegram['value']) + '\n\n')
+
+
+def __invalidTelegram(telegram):
+    with open(activeSession, 'a+') as logFile:
+        logFile.write('invalid:\n')
+        logFile.write(''.join('{:02x} '.format(x) for x in telegram))
+        logFile.write('\n')
+        logFile.write(str(bytes(telegram)))
+        logFile.write('\n')
+        logFile.write('\n')
+
+
 inputQueue = queue.Queue()
 
 """
@@ -52,18 +74,22 @@ comPortReceiver.start()
 """
 threading.Thread(target=__inputReaderWorker).start()
 comPortHandler = ComPortHandler(port='COM8', baudrate=9600)
+telegramParser = TelegramParser(telegramReceivedCallback=__telegramReceived, invalidTelegramCallback=__invalidTelegram)
+
+preferences = Preferences.load('preferences.txt')
+activeSession = preferences['activeSession']
+if not os.path.exists(activeSession):
+    open(activeSession, 'a').close()
+TextFileViewer(activeSession)
 while True:
     while not inputQueue.empty():
         inputData = inputQueue.get(block=False)
-        print(inputData)
         inputData = inputData + '\r'
         comPortHandler.write(inputData)
-        # comPortHandler.write('\r')  # debug
 
     data = comPortHandler.read()
-    if data != b'':
-        # print(data.decode("utf-8"), end='')
-        print(data.hex() + ' ', end='')
+    if data is not None:
+        telegramParser.parse(data)
     # time.sleep(0.01)
 
 

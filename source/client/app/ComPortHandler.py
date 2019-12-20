@@ -49,7 +49,11 @@ class ComPortHandler:
         if not self.__serialPort.is_open:
             self.__open()
         try:
-            return ord(self.__serialPort.read())
+            value = self.__serialPort.read()
+            if value != b'':
+                return ord(value)
+            else:
+                return None
         except serial.serialutil.SerialException as e:
             pass  # connection failed: most probably a problem with the other device or just not connected
         except Exception as e:

@@ -16,14 +16,17 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import queue
-from enum import Enum
+import struct
 
 
 class TelegramParser:
     __TelegramStartId = 0xAA
     __TelegramEndId = 0xBB
     __ReplacementMarker = 0xCC
+
+    __ValueTypeInt8 = 0x01
+    __ValueTypeUint8 = 0x02
+    __ValueTypeFloat = 0x03
 
     __TelegramType_SingleRequestAnswer = 0x01
 
@@ -43,13 +46,6 @@ class TelegramParser:
         if byte == self.__TelegramEndId:
             self.__parseTelegram()
 
-        # elif self.state == self.ParserState.WaitingForTelegramType:
-        #     self.__handleTelegramType(byte)
-        # elif self.state == self.ParserState.ReadingValueName:
-        #     self.__handleValueName(byte)
-        # elif self.state == self.ParserState.ReadingValueType:
-        #     self.__handleValueType(byte)
-
     def __parseTelegram(self):
         self.__telegram.clear()
         try:
@@ -58,9 +54,9 @@ class TelegramParser:
             self.__handleTelegramStart(index=0)
             self.__handleTelegramType(index=1)
             valueNameLength = self.__handleValueName(index=2)
-            valueLength = self.__handleValueType(index=valueNameLength+3)
+            (valueType, valueLength) = self.__handleValueType(index=valueNameLength+3)
+            self.__handleValue(index=valueNameLength+4, valueType=valueType)
             totalOffset = valueNameLength + (valueLength - 1)
-            self.__handleValue(index=totalOffset+4)
             self.__handleTimestamp(index=totalOffset+5)
             self.__handleTelegramEnd(index=totalOffset+9)
             self.__telegramReceivedCallback(self.__telegram.copy())
@@ -103,14 +99,19 @@ class TelegramParser:
 
     def __handleValueType(self, index):
         byte = self.__telegramRaw[index]
-        if byte == 0x01:
-            self.__telegram['valueType'] = byte
+        self.__telegram['valueType'] = byte
+        if byte == self.__ValueTypeInt8 or byte == self.__ValueTypeUint8:
+            return byte, 1
+        elif byte == self.__ValueTypeFloat:
+            return byte, 4
         else:
             raise ValueError
-        return 1
 
-    def __handleValue(self, index):
-        self.__telegram['value'] = self.__telegramRaw[index]
+    def __handleValue(self, index, valueType):
+        if valueType == self.__ValueTypeInt8 or valueType == self.__ValueTypeUint8:
+            self.__telegram['value'] = self.__telegramRaw[index]
+        elif valueType == self.__ValueTypeFloat:
+            self.__telegram['value'] = struct.unpack('f', bytes(self.__telegramRaw[index:index+4]))[0]
 
     def __handleTimestamp(self, index):
         self.__telegram['timestamp'] = int.from_bytes(self.__telegramRaw[index:index+4], byteorder='big', signed=False)
@@ -121,24 +122,5 @@ class TelegramParser:
         if len(self.__telegramRaw) != index + 1:
             raise ValueError
 
-    # self.__appendToTelegram('telegramType', byte)
-    # if byte == 0x67:
-    #     self.__handleInvalidTelegram()
-    # else:
-    #     self.state = self.ParserState.ReadingValueName
-
-    # def __handleUnexpectedStateTransition(self, expectedState):
-    #     if self.state != expectedState:
-    #         self.__handleInvalidTelegram()
-
     def __handleInvalidTelegram(self):
         self.__invalidTelegramCallback(self.__telegramRawOriginal)
-
-    # def __startTelegramParsing(self):
-    #     self.telegram = {'telegramStart': [self.__TelegramStartId]}
-
-    # def __appendToTelegram(self, field, byte):
-    #     if field in self.__telegram:
-    #         self.__telegram[field].append(byte)
-    #     else:
-    #         self.__telegram[field] = [byte]

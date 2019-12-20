@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 from app.TelegramParser import TelegramParser
 import mock
+import struct
 
 
 class TestTelegramParser:
@@ -86,6 +87,15 @@ class TestTelegramParser:
         telegram = self.__telegramWithField('valueType', 0x33)
         self.__parseTelegram(telegram)
         self.__assertInvalidTelegram(telegram)
+
+    def test_valueTypeFloat(self):
+        telegram = [170, 1, 109, 121, 86, 97, 108, 117, 101, 78, 97, 109, 101, 0,
+                    3, 0x33, 0x33, 0xA3, 0x40, 4, 3, 2, 1, 187]
+        self.__parseTelegram(telegram)
+        expectedFloat = struct.unpack('f', struct.pack('f', 5.1))[0]
+        expectedTelegram = {'telegramType': 0x01, 'valueName': 'myValueName', 'valueType': 0x03, 'value': expectedFloat,
+                            'timestamp': 0x04030201}
+        self.__assertValidTelegram(expectedTelegram)
 
     def test_tooLongTelegram(self):
         tooLongTelegram = self.__ValidTelegram[0:-1] + [0xEE] + [self.__ValidTelegram[-1]]

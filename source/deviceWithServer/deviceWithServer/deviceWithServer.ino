@@ -16,12 +16,7 @@
  */
 
 //Board: Arduino Leonardo
-
-#include "squareWave.h"
-#include "controller.h"
-#include "plant.h"
 #include "app.h"
-#include "it.h"
 
 boolean timerEvent;
 unsigned char cnt = 0;
@@ -52,23 +47,20 @@ void loop(void){
 	setBuiltinLedOn();
  
 	timerEvent=false;
-//	appIn.millis_ms = millis();
-//	appTick(appIn, &appOut);
     appTick();
-
-    #ifdef IT_ENABLED
-        itSendToClient("squareMillis", appOut.squareMillis, millis());
-        itSendToClient("sqrtMillis", appOut.sqrtMillis, millis());
-    #endif
 }
 
-void setBuiltinLedOn(void){
+inline void initBuiltinLed(void){
   pinMode(LED_BUILTIN, OUTPUT);
+}
+
+inline void setBuiltinLedOn(void){
+  initBuiltinLed();
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-void setBuiltinLedOff(void){
-  pinMode(LED_BUILTIN, OUTPUT);
+inline void setBuiltinLedOff(void){
+  initBuiltinLed();
   digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -92,16 +84,6 @@ void timerSetup(void){
 ISR(TIMER1_COMPA_vect){
 	timerEvent = true;
 }
-
-/*ItError_t writeBytesToUart(const char* const byteArray, const unsigned char byteCount){
-	if(!Serial){
-		return ItError::ClientUnavailable;
-	}
-	if(Serial.write(byteArray, byteCount) != byteCount){
-		return ItError_ClientWriteError;
-	}
-	return ItError_NoError;
-}*/
 
 ItError_t writeByteToUart(const unsigned char data){
 	if(!Serial){

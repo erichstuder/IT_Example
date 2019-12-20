@@ -124,7 +124,7 @@ TEST_F(ItTest, handleCmdInt8) {
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x01, 0x11, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x00, 0x01, 0x11, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
@@ -137,7 +137,7 @@ TEST_F(ItTest, handleCmdUint8) {
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'A', 0x02, 0x45, 0x78, 0x56, 0x34, 0x12, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'A', 0x00, 0x02, 0x45, 0x78, 0x56, 0x34, 0x12, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
@@ -150,7 +150,7 @@ TEST_F(ItTest, handleCmdFloat) {
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'B', 0x03, 0xAE, 0x47, 0XA1, 0x3F, 0xDD, 0xCC, 0xCB, 0x99, 0xCC, 0xA9, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'B', 0x00, 0x03, 0xAE, 0x47, 0XA1, 0x3F, 0xDD, 0xCC, 0xCB, 0x99, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}

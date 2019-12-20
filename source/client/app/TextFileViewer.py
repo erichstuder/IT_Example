@@ -30,7 +30,7 @@ class TextFileViewer:
         self.__root = tk.Tk()
         self.__root.title(self.__filePath)
         # root.iconbitmap('dummy.ico')
-        self.__textWidget = tk.Text(self.__root, height=20, width=80)
+        self.__textWidget = tk.Text(self.__root, height=20, width=120)
         self.__textWidget.configure(background='black', foreground='white', state='disabled')
         self.__textWidget.pack()
         self.__updater()

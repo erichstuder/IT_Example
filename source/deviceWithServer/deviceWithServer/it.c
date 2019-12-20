@@ -99,6 +99,12 @@ static void itTick_Implementation(void){
 		}
 	
 		if(dataByte == '\r'){
+			cmdBufferError = cmdBufferAppend('\0');
+			if(cmdBufferError == ItError_BufferFull){
+				return;//TODO: inform client
+			}else if(cmdBufferError != ItError_NoError){
+				return;
+			}
 			sendAnswer();
 			clearCmdBuffer();
 
@@ -215,7 +221,7 @@ static ItError_t sendContentByte(unsigned char data) {
 
 static ItError_t sendValueName(void) {
 	ItError_t err;
-	for (unsigned char n = 0; n < strlen((char*)cmdBuffer); n++) {
+	for (unsigned char n = 0; n < strlen((char*)cmdBuffer)+1; n++) {
 		err = sendContentByte(cmdBuffer[n]);
 		if (err != ItError_NoError) {
 			return err;
