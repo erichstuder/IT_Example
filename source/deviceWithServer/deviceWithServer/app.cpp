@@ -31,7 +31,7 @@ static GetCurrentMillis_t getMillis;
 
 static ItError_t itCmdHandler(ItCommandResult_t* result);
 
-void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
+void appInit_Implementation(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis){
 	setSquareWaveTickTime(APP_SAMPLETIME);
 	setSquareWaveFrequency(0.2f);
 	setSquareWaveLevels(2, 10);
@@ -43,8 +43,9 @@ void appInit(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByt
 
 	getMillis = getCurrentMillis;
 }
+void (*appInit)(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis) = appInit_Implementation;
 
-void appTick(void){
+void appTick_Implementation(void){
 	setControllerDesiredValue( getSquareWaveSignal() );
 	setControllerActualValue( getPlantOut() );
 	setPlantIn( getControllerSignal() );
@@ -54,6 +55,7 @@ void appTick(void){
 	plantTick();
 	itTick();
 }
+void (*appTick)(void) = appTick_Implementation;
 
 static ItError_t itCmdHandler(ItCommandResult_t* result){
 	ItError_t err = ItError_NoError;

@@ -16,17 +16,20 @@
  */
 
 //Board: Arduino Leonardo
+#include <Arduino.h>
 #include "app.h"
 
-boolean timerEvent;
-unsigned char cnt = 0;
-ItError_t writeByteToUart(const unsigned char data);
-ItError_t readByteFromUart(unsigned char* const data);
+static bool timerEvent = false;
+
+static inline void setBuiltinLedOn(void);
+static inline void setBuiltinLedOff(void);
+static inline void timerSetup(void);
+static inline ItError_t writeByteToUart(const unsigned char data);
+static inline ItError_t readByteFromUart(unsigned char* const data);
 
 void setup(void){
 	timerSetup();
 
-	//debugging infrastructure
 	Serial.begin(9600);
 	appInit(writeByteToUart, readByteFromUart, millis);
 }
@@ -36,13 +39,6 @@ void loop(void){
 		setBuiltinLedOff();
 		return;
 	}
-
-	/*if(cnt < 5){//debug
-		cnt++;
-	}else{
-		cnt = 0;
-		Serial.println("5s timerEvent");
-	}*/
 	
 	setBuiltinLedOn();
  
@@ -50,21 +46,21 @@ void loop(void){
     appTick();
 }
 
-inline void initBuiltinLed(void){
+static inline void initBuiltinLed(void){
   pinMode(LED_BUILTIN, OUTPUT);
 }
 
-inline void setBuiltinLedOn(void){
+static inline void setBuiltinLedOn(void){
   initBuiltinLed();
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-inline void setBuiltinLedOff(void){
+static inline void setBuiltinLedOff(void){
   initBuiltinLed();
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-void timerSetup(void){
+static inline void timerSetup(void){
 	timerEvent=false;
 	#if APP_SAMPLETIME == 1
 		TCCR1A = 0; //for any reason, this must be done!!
@@ -85,8 +81,8 @@ ISR(TIMER1_COMPA_vect){
 	timerEvent = true;
 }
 
-ItError_t writeByteToUart(const unsigned char data){
-	if(!Serial){
+static inline ItError_t writeByteToUart(const unsigned char data){
+	if(!Serial){ //TODO: brauchts das?
 		return ItError_ClientUnavailable;
 	}
 	if(Serial.write(data) != 1){
@@ -95,14 +91,23 @@ ItError_t writeByteToUart(const unsigned char data){
 	return ItError_NoError;
 }
 
-ItError_t readByteFromUart(unsigned char* const data){
+static inline bool bytesFromUartAvailable(void){
+	if(!Serial){ //TODO: brauchts das?
+		return false;
+	}
+	return Serial.available() > 0;
+}
+
+inline static ItError_t readByteFromUart(unsigned char* const data){
 	if(!Serial){ //TODO: brauchts das?
 		return ItError_ClientUnavailable;
 	}
-	if(Serial.available() > 0){
-		*data = (unsigned char) Serial.read();
-	}else{
+	int incomingByte = Serial.read();
+	if(incomingByte == -1){
 		return ItError_NoDataAvailable;
+		
+	}else{
+		*data = (unsigned char)incomingByte;
 	}
 	return ItError_NoError;
 }

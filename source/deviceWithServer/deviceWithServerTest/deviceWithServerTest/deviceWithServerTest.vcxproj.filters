@@ -12,9 +12,12 @@
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="..\..\deviceWithServer\it.c" />
+    <ClCompile Include="deviceWithServerTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\deviceWithServer.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Arduino.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

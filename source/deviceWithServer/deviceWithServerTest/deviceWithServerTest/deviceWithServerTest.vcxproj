@@ -36,12 +36,13 @@
     <IncludePath>$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(LOCALAPPDATA)\Programs\Python\Python38\include;$(ProjectDir)..\..\deviceWithServer;$(IncludePath)</IncludePath>
+    <IncludePath>$(LOCALAPPDATA)\Programs\Python\Python38\include;$(ProjectDir)..\..\deviceWithServer;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(LOCALAPPDATA)\Programs\Python\Python38\libs;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <ReferencePath>$(VC_ReferencesPath_x64);</ReferencePath>
   </PropertyGroup>
   <ItemGroup>
+    <ClInclude Include="Arduino.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +53,7 @@
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="appTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
+    <ClCompile Include="deviceWithServerTest.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
     <ClCompile Include="pch.cpp">
@@ -63,6 +65,9 @@
     <ClCompile Include="squareWaveTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\deviceWithServer\deviceWithServer.ino">
+      <FileType>Document</FileType>
+    </ClCompile>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemDefinitionGroup />
