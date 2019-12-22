@@ -25,7 +25,8 @@ typedef enum {
 	ItError_ClientWriteError,
 	ItError_NoDataAvailable,
 	ItError_InvalidCommand,
-	ItError_InvalidValueType
+	ItError_InvalidValueType,
+	ItError_Unknown,
 }ItError_t;
 
 typedef enum {
@@ -44,15 +45,22 @@ typedef struct {
 	unsigned long timestamp;
 }ItCommandResult_t;
 
-typedef ItError_t (*WriteByteToClient_t)(const unsigned char data);
-typedef ItError_t (*ReadByteFromClient_t)(unsigned char* const data);
-typedef ItError_t (*CmdHandler_t)(ItCommandResult_t* result);
-typedef ItError_t (*CmdBufferAppend_t)(const unsigned char dataByte);
+typedef bool (*ByteFromClientAvailable_t) (void);
+typedef ItError_t (*ReadByteFromClient_t) (unsigned char* const data);
+typedef ItError_t (*WriteByteToClient_t) (const unsigned char data);
+typedef ItError_t (*CmdHandler_t) (ItCommandResult_t* result);
+
+typedef struct {
+	ByteFromClientAvailable_t byteFromClientAvailable;
+	ReadByteFromClient_t readByteFromClient;
+	WriteByteToClient_t writeByteToClient;
+	CmdHandler_t itCmdHandler;
+}ItCallbacks_t;
 
 #ifdef ITLIBRARY_EXPORTS
 //nothing to do
 #else
-extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback);
+extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks);
 extern void (*itTick)(void);
 #endif
 

@@ -19,7 +19,6 @@
 #include <stdbool.h>
 
 #include "it.h"
-//#include "arduino.h" //debug
 
 #define TelegramStart 0xAA
 #define TelegramEnd 0xBB
@@ -35,8 +34,9 @@ static unsigned char cmdBufferSize;
 static unsigned char cmdBufferIndex;
 static bool cmdBufferFull;
 
-static WriteByteToClient_t writeByteToClient;
+static ByteFromClientAvailable_t byteFromClientAvailable;
 static ReadByteFromClient_t readByteFromClient;
+static WriteByteToClient_t writeByteToClient;
 static CmdHandler_t cmdHandler;
 //static CmdBufferAppend_t cmdBufferAppend;
 
@@ -51,6 +51,8 @@ typedef enum {
 	TelegramType_Error               = 0x03,
 } TelegramType_t;
 
+static void commandBufferFullMessage(ItError_t err);
+static ItError_t sendString(const char* const text);
 static ItError_t sendAnswer(void);
 static ItError_t sendContentByte(unsigned char data);
 static ItError_t sendTelegramStart(void);
@@ -64,76 +66,48 @@ static ItError_t sendTimeStampOfValue(unsigned long timeStampOfValue);
 static ItError_t cmdBufferAppend(const char dataByte);
 static void clearCmdBuffer(void);
 
-static void itInit_Implementation(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
+static void itInit_Implementation(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) {
 	cmdBuffer = itCmdBuffer;
 	cmdBufferSize = itCmdBufferSize;
 	cmdBufferIndex = 0;
 	cmdBufferFull = false;
 
-	writeByteToClient = writeByteToClientCallback;
-	readByteFromClient = readByteFromClientCallback;
-	cmdHandler = cmdHandlerCallback;
+	byteFromClientAvailable = callbacks.byteFromClientAvailable;
+	readByteFromClient = callbacks.readByteFromClient;
+	writeByteToClient = callbacks.writeByteToClient;
+	cmdHandler = callbacks.itCmdHandler;
 }
 #ifdef ITLIBRARY_EXPORTS
-__declspec(dllexport) void itInit(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
-	itInit_Implementation(itCmdBuffer, itCmdBufferSize, cmdHandlerCallback, writeByteToClientCallback, readByteFromClientCallback);
+__declspec(dllexport) void itInit(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) {
+	itInit_Implementation(itCmdBuffer, itCmdBufferSize, callbacks);
 }
 #else
-void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) = itInit_Implementation;
+void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) = itInit_Implementation;
 #endif
 
 static void itTick_Implementation(void){
-	//TODO: handle the errors
 	unsigned char dataByte;
-	ItError_t readByteError;
-	ItError_t cmdBufferError;
+	ItError_t err;
 
-	do{
-		readByteError = readByteFromClient(&dataByte);
-		if(readByteError == ItError_NoDataAvailable){
-			return;
-		}else if(readByteError == ItError_ClientUnavailable){
-			return;
-		}else if(readByteError != ItError_NoError){
+	while (byteFromClientAvailable()) {
+		err = readByteFromClient(&dataByte);
+		if (err != ItError_NoError) {
+			// Most probably just disconnected. We can't do anything about it.
+			// In the future there may be a logging file or an error callback to restart the communication or error-signaling on the LED or ...
 			return;
 		}
-	
-		if(dataByte == '\r'){
-			cmdBufferError = cmdBufferAppend('\0');
-			if(cmdBufferError == ItError_BufferFull){
-				return;//TODO: inform client
-			}else if(cmdBufferError != ItError_NoError){
-				return;
-			}
+
+		if (dataByte == '\r') {
+			err = cmdBufferAppend('\0');
+			commandBufferFullMessage(err);
 			sendAnswer();
 			clearCmdBuffer();
-
-
-
-			/*cmdHandlerError = cmdHandler(&result);
-			if(cmdHandlerError == ItError::InvalidCommand){
-				return;
-			}else if(cmdHandlerError != ItError::NoError){
-				return;
-			}*/
-			
-			/*writeByteError = writeByteToClient((char*)&result, sizeof(result));
-			if(writeByteError == ItError::ClientUnavailable){
-				return;
-			}else if(writeByteError == ItError::ClientWriteError){
-				return;
-			}else if(writeByteError != ItError::NoError){
-				return;
-			}*/
-		}else{
-			cmdBufferError = cmdBufferAppend(dataByte);
-			if(cmdBufferError == ItError_BufferFull){
-				return;//TODO: inform client
-			}else if(cmdBufferError != ItError_NoError){
-				return;
-			}
 		}
-	}while(true);
+		else {
+			err = cmdBufferAppend(dataByte);
+			commandBufferFullMessage(err);
+		}
+	}
 }
 #ifdef ITLIBRARY_EXPORTS
 __declspec(dllexport) void itTick(void) {
@@ -142,6 +116,27 @@ __declspec(dllexport) void itTick(void) {
 #else
 void (*itTick)(void) = itTick_Implementation;
 #endif
+
+static void commandBufferFullMessage(ItError_t err) {
+	if (err == ItError_BufferFull) {
+		ItError_t localErr;
+		do {
+			localErr = sendString("Error: Input Buffer is full!\n");
+		} while (localErr != ItError_NoError);
+	}
+}
+
+static ItError_t sendString(const char* const text) {
+	ItError_t err;
+	unsigned char n;
+	for (n = 0; n < strlen(text); n++) {
+		err = writeByteToClient(text[n]);
+		if (err != ItError_NoError) {
+			return err;
+		}
+	}
+	return ItError_NoError;
+}
 
 static ItError_t sendAnswer(void) {
 	ItError_t err = sendTelegramStart();

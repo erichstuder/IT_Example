@@ -18,15 +18,32 @@
 #ifndef APP_H
 #define APP_H
 
-extern "C" {
+/*extern "C" {
 #include "it.h"
-}
+}*/
 
 #define APP_SAMPLETIME 1 //s
 
-typedef unsigned long (*GetCurrentMillis_t)(void);
+enum class AppError {
+	NoError,
+	UartUnavailable,
+	NoDataAvailable,
+	UartWriteError
+};
 
-extern void (*appInit)(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis);
+typedef unsigned long (*GetCurrentMillis_t) (void);
+typedef bool (*ByteFromUartAvailable_t) (void);
+typedef AppError (*ReadByteFromUart_t) (unsigned char* const data);
+typedef AppError (*WriteByteToUart_t) (const unsigned char data);
+
+typedef struct {
+	ByteFromUartAvailable_t byteFromUartAvailable;
+	ReadByteFromUart_t readByteFromUart;
+	WriteByteToUart_t writeByteToUart;
+	GetCurrentMillis_t getCurrentMillis;
+}AppCallbacks_t;
+
+extern void (*appInit)(AppCallbacks_t callbacks);
 extern void (*appTick)(void);
 
 #endif //APP_H

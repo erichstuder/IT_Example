@@ -24,19 +24,18 @@ extern "C" {
 const unsigned char ItCmdBufferSize = 30;
 unsigned char itCmdBuffer[ItCmdBufferSize];
 
+bool byteFromClientAvailable_done;
 bool readByteFromClient_done;
 ItError_t readByteFromClient_error;
 unsigned char readByteFromClient_buffer[256];
 unsigned char readByteFromClient_bytesLeft;
-const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', '\r' }; //no string-terminator
 
 unsigned char writeByteToClient_buffer[256];
 unsigned char writeByteToClient_bufferCount;
 
-static ItError_t writeByteToClient_Spy(const unsigned char data) {
-	writeByteToClient_buffer[writeByteToClient_bufferCount] = data;
-	writeByteToClient_bufferCount++;
-	return ItError_NoError;
+static bool byteFromClientAvailable_Spy(void) {
+	byteFromClientAvailable_done = true;
+	return true;
 }
 
 static ItError_t readByteFromClient_Spy(unsigned char* const data) {
@@ -46,7 +45,10 @@ static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	{
 		readByteFromClient_bytesLeft--;
 		*data = readByteFromClient_buffer[readByteFromClient_bytesLeft];
+#pragma warning(push)
+#pragma warning(disable : 26812)
 		return ItError_NoError;
+#pragma warning(pop) 
 	}
 	else
 	{
@@ -54,9 +56,21 @@ static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	}
 }
 
+static ItError_t writeByteToClient_Spy(const unsigned char data) {
+	writeByteToClient_buffer[writeByteToClient_bufferCount] = data;
+	writeByteToClient_bufferCount++;
+#pragma warning(push)
+#pragma warning(disable : 26812)
+	return ItError_NoError;
+#pragma warning(pop) 
+}
+
 static ItError_t cmdHandler_Spy(ItCommandResult_t* result) {
 	if (readByteFromClient_buffer[1] == 'A') {
+#pragma warning(push)
+#pragma warning(disable : 26812)
 		result->valueType = ValueType_Uint8;
+#pragma warning(pop) 
 		result->valueInt8 = 0x45;
 		result->timestamp = 0x12345678;
 	}
@@ -82,7 +96,12 @@ protected:
 	virtual ~ItTest() {}
 
 	virtual void SetUp() {
-		itInit(itCmdBuffer, ItCmdBufferSize, cmdHandler_Spy, writeByteToClient_Spy, readByteFromClient_Spy);
+		ItCallbacks_t callbacks;
+		callbacks.byteFromClientAvailable = byteFromClientAvailable_Spy;
+		callbacks.readByteFromClient = readByteFromClient_Spy;
+		callbacks.writeByteToClient = writeByteToClient_Spy;
+		callbacks.itCmdHandler = cmdHandler_Spy;
+		itInit(itCmdBuffer, ItCmdBufferSize, callbacks);
 
 		readByteFromClient_done = false;
 		readByteFromClient_bytesLeft = 0;
@@ -101,8 +120,10 @@ protected:
 
 
 TEST_F(ItTest, readByteFromClient_called) {
+	ASSERT_EQ(byteFromClientAvailable_done, false);
 	ASSERT_EQ(readByteFromClient_done, false);
 	itTick();
+	ASSERT_EQ(byteFromClientAvailable_done, true);
 	ASSERT_EQ(readByteFromClient_done, true);
 }
 
@@ -116,7 +137,24 @@ TEST_F(ItTest, appendToBuffer) {
 	ASSERT_EQ(itCmdBuffer[0], 'E');
 }
 
+TEST_F(ItTest, tooMuchInput) {
+	//no string-terminator
+	const unsigned char TestCommand[] = { '1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','\r'};
+	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
+		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand) - 1 - n]; //fill the other way round
+	}
+	readByteFromClient_bytesLeft = sizeof(TestCommand);
+
+	itTick();
+
+	const unsigned char ExpectedTelegram[] = {'E','r','r','o','r',':',' ','I','n','p','u','t',' ','B','u','f','f','e','r',' ','i','s',' ','f','u','l','l','!','\n'};
+	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
+		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+	}
+}
+
 TEST_F(ItTest, handleCmdInt8) {
+	const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', '\r' }; //no string-terminator
 	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
 		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand)-1-n]; //fill the other way round
 	}

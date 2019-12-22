@@ -41,9 +41,16 @@ bool plantTickDone;
 unsigned char byteToReadFromClient;
 unsigned char nrOfBytesToReadFromClient;
 unsigned char itCmdBufferConstantSize;
-CmdHandler_t itCmdHandler;
-WriteByteToClient_t writeByteToClient;
+
+ByteFromClientAvailable_t byteFromClientAvailable;
 ReadByteFromClient_t readByteFromClient;
+WriteByteToClient_t writeByteToClient;
+CmdHandler_t itCmdHandler;
+
+ByteFromUartAvailable_t byteFromUartAvailable;
+ReadByteFromUart_t readByteFromUart;
+WriteByteToUart_t writeByteToUart;
+
 bool itTickDone;
 
 static void setSquareWaveTickTime_Spy(float time) {
@@ -106,30 +113,42 @@ static void plantTick_Spy(void) {
 }
 
 
-static ItError_t writeByteToClient_Spy(const unsigned char data) {
-	return ItError_NoError;
+static bool byteFromUartAvailable_Spy(void) {
+	return true;
 }
 
-static ItError_t readByteFromClient_Spy(unsigned char* const data) {
+static AppError readByteFromUart_Spy(unsigned char* const data) {
 	if (nrOfBytesToReadFromClient > 0) {
 		*data = byteToReadFromClient;
 		nrOfBytesToReadFromClient--;
-		return ItError_NoError;
+#pragma warning(push)
+#pragma warning(disable : 26812)
+		return AppError::NoError;
+#pragma warning(pop)
 	}
 	else {
-		return ItError_NoDataAvailable;
+		return AppError::NoDataAvailable;
 	}
 }
+
+/*static AppError_t writeByteToUart_Spy(const unsigned char data) {
+#pragma warning(push)
+#pragma warning(disable : 26812)
+	return AppError_NoError;
+#pragma warning(pop)
+}*/
+
 
 static unsigned long millis_Fake(void) {
 	return 33;
 }
 
-static void itInit_Spy(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) {
+static void itInit_Spy(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) {
 	itCmdBufferConstantSize = itCmdBufferSize;
-	itCmdHandler = cmdHandlerCallback;
-	writeByteToClient = writeByteToClientCallback;
-	readByteFromClient = readByteFromClientCallback;
+	byteFromClientAvailable = callbacks.byteFromClientAvailable;
+	readByteFromClient = callbacks.readByteFromClient;
+	writeByteToClient = callbacks.writeByteToClient;
+	itCmdHandler = callbacks.itCmdHandler;
 }
 
 static void itTick_Spy(void) {
@@ -157,7 +176,7 @@ protected:
 	void (*setPlantIn_Original)(float value) = NULL;
 	void (*plantTick_Original)(void) = NULL;
 
-	void (*itInit_Original)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, CmdHandler_t cmdHandlerCallback, WriteByteToClient_t writeByteToClientCallback, ReadByteFromClient_t readByteFromClientCallback) = NULL;
+	void (*itInit_Original)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) = NULL;
 	void (*itTick_Original)(void) = NULL;
 
 	AppTest() {}
@@ -230,9 +249,15 @@ protected:
 		itTick_Original = itTick;
 		itTick = itTick_Spy;
 
+		byteFromUartAvailable = NULL;
+		readByteFromUart = NULL;
+		writeByteToUart = NULL;
+
 		itCmdBufferConstantSize = 0;
-		writeByteToClient = NULL;
+		byteFromClientAvailable = NULL;
 		readByteFromClient = NULL;
+		writeByteToClient = NULL;
+		itCmdHandler = NULL;
 	}
 
 	virtual void TearDown() {
@@ -265,7 +290,8 @@ TEST_F(AppTest, appInitSettings) {
 	ASSERT_EQ(squareWaveLevel2, 0.0f);
 	ASSERT_EQ(controllerKp, 0.0f);
 	ASSERT_EQ(controllerKi, 0.0f);
-	appInit(NULL, NULL, NULL);
+	AppCallbacks_t dummy = { NULL, NULL, NULL, NULL };
+	appInit(dummy);
 	ASSERT_EQ(squareWaveTickTime, 1);
 	ASSERT_EQ(squareWaveFrequency, 0.2f);
 	ASSERT_EQ(squareWaveLevel1, 2.0f);
@@ -278,7 +304,8 @@ TEST_F(AppTest, appTickWiring) {
 	ASSERT_EQ(controllerDesiredValue, 0.0f);
 	ASSERT_EQ(controllerActualValue, 0.0f);
 	ASSERT_EQ(plantIn, 0.0f);
-	appInit(writeByteToClient_Spy, readByteFromClient_Spy, NULL);
+	AppCallbacks_t callbacks = { NULL, NULL, NULL, NULL };
+	appInit(callbacks);
 	appTick();
 	ASSERT_EQ(controllerDesiredValue, 5.0f);
 	ASSERT_EQ(controllerActualValue, 7.0f);
@@ -290,7 +317,8 @@ TEST_F(AppTest, appTickFunctions) {
 	ASSERT_FALSE(controllerTickDone);
 	ASSERT_FALSE(plantTickDone);
 	ASSERT_FALSE(itTickDone);
-	appInit(writeByteToClient_Spy, readByteFromClient_Spy, NULL);
+	AppCallbacks_t callbacks = { NULL, NULL, NULL, NULL };
+	appInit(callbacks);
 	appTick();
 	ASSERT_TRUE(squareWaveTickDone);
 	ASSERT_TRUE(controllerTickDone);
@@ -299,20 +327,38 @@ TEST_F(AppTest, appTickFunctions) {
 }
 
 TEST_F(AppTest, itInitCalled) {
-	ASSERT_TRUE(writeByteToClient == NULL);
-	ASSERT_TRUE(readByteFromClient == NULL);
 	ASSERT_EQ(itCmdBufferConstantSize, 0);
-	appInit(writeByteToClient_Spy, readByteFromClient_Spy, NULL);
-	ASSERT_TRUE(writeByteToClient == writeByteToClient_Spy);
-	ASSERT_TRUE(readByteFromClient == readByteFromClient_Spy);
+	ASSERT_TRUE(byteFromUartAvailable == NULL);
+	ASSERT_TRUE(readByteFromClient == NULL);
+	ASSERT_TRUE(writeByteToClient == NULL);
+	ASSERT_TRUE(itCmdHandler == NULL);
+	AppCallbacks_t callbacks;
+	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
+	callbacks.readByteFromUart = NULL;
+	callbacks.writeByteToUart = NULL;
+	callbacks.getCurrentMillis = NULL;
+	appInit(callbacks);
+	//appInit(writeByteToClient_Spy, readByteFromClient_Spy, NULL);
 	ASSERT_EQ(itCmdBufferConstantSize, 30);
+	ASSERT_TRUE(byteFromClientAvailable == byteFromUartAvailable_Spy);
+	ASSERT_TRUE(readByteFromClient != NULL);
+	ASSERT_TRUE(writeByteToClient != NULL);
+	ASSERT_TRUE(itCmdHandler != NULL);
 }
 
 TEST(AppTest_withIt, handleCmd) {
-	appInit(writeByteToClient_Spy, readByteFromClient_Spy, millis_Fake);
+	AppCallbacks_t callbacks;
+	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
+	callbacks.readByteFromUart = readByteFromUart_Spy;
+	callbacks.writeByteToUart = NULL;
+	callbacks.getCurrentMillis = millis_Fake;
+	appInit(callbacks);
 
 	char cmd[] = "desiredValue";
+#pragma warning(push)
+#pragma warning(disable : 26812)
 	ItError_t err;
+#pragma warning(pop) 
 	for (int n = 0; n < strlen(cmd); n++) {
 		byteToReadFromClient = cmd[n];
 		nrOfBytesToReadFromClient = 1;
@@ -328,7 +374,12 @@ TEST(AppTest_withIt, handleCmd) {
 }
 
 TEST(AppTest_withIt, handleInvalidCmd) {
-	appInit(writeByteToClient_Spy, readByteFromClient_Spy, millis_Fake);
+	AppCallbacks_t callbacks;
+	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
+	callbacks.readByteFromUart = readByteFromUart_Spy;
+	callbacks.writeByteToUart = NULL;
+	callbacks.getCurrentMillis = NULL;
+	appInit(callbacks);
 
 	char cmd[] = "desiredValue42";
 	ItError_t err;

@@ -24,14 +24,20 @@ static bool timerEvent = false;
 static inline void setBuiltinLedOn(void);
 static inline void setBuiltinLedOff(void);
 static inline void timerSetup(void);
-static inline ItError_t writeByteToUart(const unsigned char data);
-static inline ItError_t readByteFromUart(unsigned char* const data);
+static inline bool byteFromUartAvailable(void);
+static inline AppError readByteFromUart(unsigned char* const data);
+static inline AppError writeByteToUart(const unsigned char data);
 
 void setup(void){
 	timerSetup();
 
 	Serial.begin(9600);
-	appInit(writeByteToUart, readByteFromUart, millis);
+	AppCallbacks_t callbacks;
+	callbacks.byteFromUartAvailable = byteFromUartAvailable;
+	callbacks.readByteFromUart = readByteFromUart;
+	callbacks.writeByteToUart = writeByteToUart;
+	callbacks.getCurrentMillis = millis;
+	appInit(callbacks);
 }
 
 void loop(void){
@@ -81,33 +87,33 @@ ISR(TIMER1_COMPA_vect){
 	timerEvent = true;
 }
 
-static inline ItError_t writeByteToUart(const unsigned char data){
-	if(!Serial){ //TODO: brauchts das?
-		return ItError_ClientUnavailable;
-	}
-	if(Serial.write(data) != 1){
-		return ItError_ClientWriteError;
-	}
-	return ItError_NoError;
-}
-
-static inline bool bytesFromUartAvailable(void){
+static inline bool byteFromUartAvailable(void){
 	if(!Serial){ //TODO: brauchts das?
 		return false;
 	}
 	return Serial.available() > 0;
 }
 
-inline static ItError_t readByteFromUart(unsigned char* const data){
+inline static AppError readByteFromUart(unsigned char* const data){
 	if(!Serial){ //TODO: brauchts das?
-		return ItError_ClientUnavailable;
+		return AppError::UartUnavailable;
 	}
 	int incomingByte = Serial.read();
 	if(incomingByte == -1){
-		return ItError_NoDataAvailable;
+		return AppError::NoDataAvailable;
 		
 	}else{
 		*data = (unsigned char)incomingByte;
 	}
-	return ItError_NoError;
+	return AppError::NoError;
+}
+
+static inline AppError writeByteToUart(const unsigned char data){
+	if(!Serial){ //TODO: brauchts das?
+		return AppError::UartUnavailable;
+	}
+	if(Serial.write(data) != 1){
+		return AppError::UartWriteError;
+	}
+	return AppError::NoError;
 }

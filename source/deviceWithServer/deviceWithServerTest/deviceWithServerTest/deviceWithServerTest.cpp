@@ -37,18 +37,18 @@ void digitalWrite(uint8_t pin, uint8_t value) {
 extern void setup(void);
 extern void loop(void);
 
-void appInit_Spy(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis) {
+void appInit_Spy(AppCallbacks_t callbacks) {
 	Serial.writeCalled = false;
-	ASSERT_EQ(writeByteToClient(0xA8), ItError_NoError);
+	ASSERT_EQ(callbacks.writeByteToUart(0xA8), AppError::NoError);
 	ASSERT_TRUE(Serial.writeCalled);
 
 	Serial.readCalled = false;
 	unsigned char myByte = 0;
-	ASSERT_EQ(readByteFromClient(&myByte), ItError_NoError);
+	ASSERT_EQ(callbacks.readByteFromUart(&myByte), AppError::NoError);
 	ASSERT_EQ(myByte, 42);
 	ASSERT_TRUE(Serial.readCalled);
 
-	ASSERT_EQ(getCurrentMillis(), 1042);
+	ASSERT_EQ(callbacks.getCurrentMillis(), 1042);
 }
 
 bool appTickCalled;
@@ -59,7 +59,7 @@ void appTick_Spy(void) {
 class DeviceWithServerTest : public ::testing::Test {
 protected:
 	void (*appTick_Original)(void) = NULL;
-	void (*appInit_Original)(WriteByteToClient_t writeByteToClient, ReadByteFromClient_t readByteFromClient, GetCurrentMillis_t getCurrentMillis) = NULL;
+	void (*appInit_Original)(AppCallbacks_t callbacks) = NULL;
 
 	DeviceWithServerTest() {}
 
