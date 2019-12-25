@@ -40,12 +40,10 @@ float plantIn;
 bool plantTickDone;
 unsigned char byteToReadFromClient;
 unsigned char nrOfBytesToReadFromClient;
-unsigned char itCmdBufferConstantSize;
 
 ByteFromClientAvailable_t byteFromClientAvailable;
 ReadByteFromClient_t readByteFromClient;
 WriteByteToClient_t writeByteToClient;
-CmdHandler_t itCmdHandler;
 
 ByteFromUartAvailable_t byteFromUartAvailable;
 ReadByteFromUart_t readByteFromUart;
@@ -143,12 +141,10 @@ static unsigned long millis_Fake(void) {
 	return 33;
 }
 
-static void itInit_Spy(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) {
-	itCmdBufferConstantSize = itCmdBufferSize;
-	byteFromClientAvailable = callbacks.byteFromClientAvailable;
-	readByteFromClient = callbacks.readByteFromClient;
-	writeByteToClient = callbacks.writeByteToClient;
-	itCmdHandler = callbacks.itCmdHandler;
+static void itInit_Spy(ItParameters_t* parameters, ItCallbacks_t* callbacks) {
+	byteFromClientAvailable = callbacks->byteFromClientAvailable;
+	readByteFromClient = callbacks->readByteFromClient;
+	writeByteToClient = callbacks->writeByteToClient;
 }
 
 static void itTick_Spy(void) {
@@ -158,7 +154,6 @@ static void itTick_Spy(void) {
 
 class AppTest : public ::testing::Test {
 protected:
-	//TODO: gibt es dafür nicht irgendwelche MAKROS?
 	void (*setSquareWaveTickTime_Original)(float time) = NULL;
 	void (*setSquareWaveFrequency_Original)(float signalFrequency) = NULL;
 	void (*setSquareWaveLevels_Original)(float level1, float level2) = NULL;
@@ -176,7 +171,7 @@ protected:
 	void (*setPlantIn_Original)(float value) = NULL;
 	void (*plantTick_Original)(void) = NULL;
 
-	void (*itInit_Original)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks) = NULL;
+	void (*itInit_Original)(ItParameters_t* parameters, ItCallbacks_t* callbacks) = NULL;
 	void (*itTick_Original)(void) = NULL;
 
 	AppTest() {}
@@ -253,11 +248,9 @@ protected:
 		readByteFromUart = NULL;
 		writeByteToUart = NULL;
 
-		itCmdBufferConstantSize = 0;
 		byteFromClientAvailable = NULL;
 		readByteFromClient = NULL;
 		writeByteToClient = NULL;
-		itCmdHandler = NULL;
 	}
 
 	virtual void TearDown() {
@@ -327,26 +320,21 @@ TEST_F(AppTest, appTickFunctions) {
 }
 
 TEST_F(AppTest, itInitCalled) {
-	ASSERT_EQ(itCmdBufferConstantSize, 0);
 	ASSERT_TRUE(byteFromUartAvailable == NULL);
 	ASSERT_TRUE(readByteFromClient == NULL);
 	ASSERT_TRUE(writeByteToClient == NULL);
-	ASSERT_TRUE(itCmdHandler == NULL);
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
 	callbacks.readByteFromUart = NULL;
 	callbacks.writeByteToUart = NULL;
 	callbacks.getCurrentMillis = NULL;
 	appInit(callbacks);
-	//appInit(writeByteToClient_Spy, readByteFromClient_Spy, NULL);
-	ASSERT_EQ(itCmdBufferConstantSize, 30);
 	ASSERT_TRUE(byteFromClientAvailable == byteFromUartAvailable_Spy);
 	ASSERT_TRUE(readByteFromClient != NULL);
 	ASSERT_TRUE(writeByteToClient != NULL);
-	ASSERT_TRUE(itCmdHandler != NULL);
 }
 
-TEST(AppTest_withIt, handleCmd) {
+/*TEST(AppTest_withIt, handleCmd) {
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
 	callbacks.readByteFromUart = readByteFromUart_Spy;
@@ -371,9 +359,9 @@ TEST(AppTest_withIt, handleCmd) {
 	ASSERT_EQ(result.valueType, ValueType_Float);
 	ASSERT_EQ(result.valueFloat, 10);
 	ASSERT_EQ(result.timestamp, 33);
-}
+}*/
 
-TEST(AppTest_withIt, handleInvalidCmd) {
+/*TEST(AppTest_withIt, handleInvalidCmd) {
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable_Spy;
 	callbacks.readByteFromUart = readByteFromUart_Spy;
@@ -393,4 +381,4 @@ TEST(AppTest_withIt, handleInvalidCmd) {
 	err = itCmdHandler(&result);
 	ASSERT_EQ(err, ItError_InvalidCommand);
 	ASSERT_EQ(result.timestamp, 0);
-}
+}*/

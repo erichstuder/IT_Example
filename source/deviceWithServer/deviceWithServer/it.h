@@ -18,6 +18,8 @@
 #ifndef IT_H
 #define IT_H
 
+#include "itCommand.h"
+
 typedef enum {
 	ItError_NoError,
 	ItError_BufferFull,
@@ -29,38 +31,31 @@ typedef enum {
 	ItError_Unknown,
 }ItError_t;
 
-typedef enum {
-	ValueType_Int8 = 0x01,
-	ValueType_Uint8 = 0x02,
-	ValueType_Float = 0x03,
-} ValueType_t;
-
-typedef struct {
-	ValueType_t valueType;
-	union {
-		signed char valueInt8;
-		unsigned char valueUint8;
-		float valueFloat;
-	};
-	unsigned long timestamp;
-}ItCommandResult_t;
-
 typedef bool (*ByteFromClientAvailable_t) (void);
 typedef ItError_t (*ReadByteFromClient_t) (unsigned char* const data);
 typedef ItError_t (*WriteByteToClient_t) (const unsigned char data);
-typedef ItError_t (*CmdHandler_t) (ItCommandResult_t* result);
+typedef unsigned long (*GetTimestamp_t) (void);
+//typedef ItError_t (*CmdHandler_t) (ItCommandResult_t* result);
 
 typedef struct {
 	ByteFromClientAvailable_t byteFromClientAvailable;
 	ReadByteFromClient_t readByteFromClient;
 	WriteByteToClient_t writeByteToClient;
-	CmdHandler_t itCmdHandler;
+	GetTimestamp_t getTimestamp;
+	//CmdHandler_t itCmdHandler;
 }ItCallbacks_t;
+
+typedef struct {
+	char* itInputBuffer;
+	unsigned char itInputBufferSize;
+	ItSignal_t* itSignals;
+	unsigned char itSignalCount;
+}ItParameters_t;
 
 #ifdef ITLIBRARY_EXPORTS
 //nothing to do
 #else
-extern void (*itInit)(unsigned char* itCmdBuffer, unsigned char itCmdBufferSize, ItCallbacks_t callbacks);
+extern void (*itInit)(ItParameters_t* parameters, ItCallbacks_t* callbacks);
 extern void (*itTick)(void);
 #endif
 

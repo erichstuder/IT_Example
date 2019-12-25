@@ -25,15 +25,31 @@ extern "C" {
 #include "it.h"
 }
 
-static unsigned char itCmdBuffer[30];
 static GetCurrentMillis_t getMillis;
+
+static ItSignal_t itSignals[] = {
+	{
+		"desiredValue",
+		ItValueType_Float,
+		(void (*)(void)) getSquareWaveSignal,
+		NULL,
+	},
+	{
+		"time",
+		ItValueType_Ulong,
+		(void (*)(void)) getMillis,
+		NULL,
+	},
+};
+static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[0]);
+static char itInputBuffer[30];
 
 static ReadByteFromUart_t readByteFromUart;
 static WriteByteToUart_t writeByteToUart;
 
 static ItError_t readByteFromUart_withItError(unsigned char* const data);
 static ItError_t writeByteToUart_withItError(const unsigned char data);
-static ItError_t itCmdHandler(ItCommandResult_t* result);
+//static ItError_t itCmdHandler(ItCommandResult_t* result);
 
 void appInit_Implementation(AppCallbacks_t callbacks){
 	setSquareWaveTickTime(APP_SAMPLETIME);
@@ -49,10 +65,14 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 	itCallbacks.readByteFromClient = readByteFromUart_withItError;
 	writeByteToUart = callbacks.writeByteToUart;
 	itCallbacks.writeByteToClient = writeByteToUart_withItError;
-	itCallbacks.itCmdHandler = itCmdHandler;
-	itInit(itCmdBuffer, sizeof(itCmdBuffer), itCallbacks);
-
-	getMillis = callbacks.getCurrentMillis;
+	itCallbacks.getTimestamp = callbacks.getCurrentMillis;
+	//itCallbacks.itCmdHandler = itCmdHandler;
+	ItParameters_t itParameters;
+	itParameters.itInputBuffer = itInputBuffer;
+	itParameters.itInputBufferSize = sizeof(itInputBuffer);
+	itParameters.itSignals = itSignals;
+	itParameters.itSignalCount = ItSignalCount;
+	itInit(&itParameters, &itCallbacks);
 }
 void (*appInit)(AppCallbacks_t callbacks) = appInit_Implementation;
 
@@ -84,11 +104,11 @@ static ItError_t writeByteToUart_withItError(const unsigned char data) {
 	return ItError_NoError;
 }
 
-static ItError_t itCmdHandler(ItCommandResult_t* result) {
+/*static ItError_t itCmdHandler(ItCommandResult_t* result) {
 	ItError_t err = ItError_NoError;
 	if (strcmp((char*)itCmdBuffer, "desiredValue") == 0) {
 		result->valueType = ValueType_Float;
-		result->valueFloat = (float)getSquareWaveSignal();
+		result->valueFloat = getSquareWaveSignal();
 		result->timestamp = getMillis();
 	}
 	else {
@@ -96,7 +116,7 @@ static ItError_t itCmdHandler(ItCommandResult_t* result) {
 		err = ItError_InvalidCommand;
 	}
 	return err;
-}
+}*/
 
 void appTick_Implementation(void){
 	setControllerDesiredValue( getSquareWaveSignal() );

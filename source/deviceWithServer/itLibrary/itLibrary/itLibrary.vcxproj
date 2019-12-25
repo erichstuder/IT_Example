@@ -159,9 +159,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\deviceWithServer\it.h" />
+    <ClInclude Include="..\..\deviceWithServer\itCommand.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\deviceWithServer\it.c" />
+    <ClCompile Include="..\..\deviceWithServer\itCommand.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

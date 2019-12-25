@@ -41,7 +41,7 @@ typedef struct {
 	ReadByteFromUart_t readByteFromUart;
 	WriteByteToUart_t writeByteToUart;
 	GetCurrentMillis_t getCurrentMillis;
-}AppCallbacks_t;
+} AppCallbacks_t;
 
 extern void (*appInit)(AppCallbacks_t callbacks);
 extern void (*appTick)(void);
