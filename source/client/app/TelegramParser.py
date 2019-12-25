@@ -26,7 +26,8 @@ class TelegramParser:
 
     __ValueTypeInt8 = 0x01
     __ValueTypeUint8 = 0x02
-    __ValueTypeFloat = 0x03
+    __ValueTypeUlong = 0x03
+    __ValueTypeFloat = 0x04
 
     __TelegramType_SingleRequestAnswer = 0x01
 

@@ -90,10 +90,10 @@ class TestTelegramParser:
 
     def test_valueTypeFloat(self):
         telegram = [170, 1, 109, 121, 86, 97, 108, 117, 101, 78, 97, 109, 101, 0,
-                    3, 0x33, 0x33, 0xA3, 0x40, 4, 3, 2, 1, 187]
+                    4, 0x33, 0x33, 0xA3, 0x40, 4, 3, 2, 1, 187]
         self.__parseTelegram(telegram)
         expectedFloat = struct.unpack('f', struct.pack('f', 5.1))[0]
-        expectedTelegram = {'telegramType': 0x01, 'valueName': 'myValueName', 'valueType': 0x03, 'value': expectedFloat,
+        expectedTelegram = {'telegramType': 0x01, 'valueName': 'myValueName', 'valueType': 0x04, 'value': expectedFloat,
                             'timestamp': 0x04030201}
         self.__assertValidTelegram(expectedTelegram)
 
