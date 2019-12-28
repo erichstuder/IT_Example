@@ -44,11 +44,12 @@ typedef struct {
 	union {
 		signed char resultInt8;
 		unsigned char resultUint8;
+		unsigned long resultUlong;
 		float resultFloat;
 	};
 } ItCommandResult_t;
 
 void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount);
-ItCommandError_t parseCommand(const char* const command, ItCommandResult_t* result);
+extern ItCommandError_t (*parseCommand) (const char* const command, ItCommandResult_t* result);
 
 #endif

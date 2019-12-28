@@ -83,7 +83,7 @@ void (*itInit)(ItParameters_t* parameters, ItCallbacks_t* callbacks) = itInit_Im
 #endif
 
 static void itTick_Implementation(void){
-	unsigned char dataByte;
+	char dataByte;
 	ItError_t err;
 
 	while (byteFromClientAvailable()) {

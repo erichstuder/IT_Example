@@ -15,23 +15,18 @@
  * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
-#include "pch.h"
+#include "CppUTest/TestHarness.h"
 #include "plant.h"
 
 float stepValueThroughDelayWithExpectedValue(float expectedValueWhileStepping);
 const float ExpectedDelayLength = 10.0f;
 
-class PlantTest : public ::testing::Test {
-protected:
-	PlantTest() {}
-
-	virtual ~PlantTest() {}
-
-	virtual void SetUp() {
+TEST_GROUP(PlantTest) {
+	void setup() {
 		clearDelayBuffer();
 	}
 
-	virtual void TearDown() {
+	void teardown() {
 		clearDelayBuffer();
 	}
 
@@ -43,47 +38,47 @@ protected:
 	}
 };
 
-TEST_F(PlantTest, tickFunctionExists) {
+TEST(PlantTest, tickFunctionExists) {
 	plantTick();
 }
 
-TEST_F(PlantTest, plantInExists) {
+TEST(PlantTest, plantInExists) {
 	setPlantIn((float)20);
 }
 
-TEST_F(PlantTest, plantOutInitialValue) {
-	ASSERT_EQ(getPlantOut(), 0);
+TEST(PlantTest, plantOutInitialValue) {
+	LONGS_EQUAL(getPlantOut(), 0);
 }
 
-TEST_F(PlantTest, delayLength) {
+TEST(PlantTest, delayLength) {
 	const float InputValue = 1;
 	setPlantIn(InputValue);
-	ASSERT_TRUE(stepValueThroughDelayWithExpectedValue(0));
+	CHECK(stepValueThroughDelayWithExpectedValue(0));
 	plantTick();
-	ASSERT_EQ(getPlantOut(), InputValue);
+	LONGS_EQUAL(getPlantOut(), InputValue);
 }
 
-TEST_F(PlantTest, inputIsPersistent) {
+TEST(PlantTest, inputIsPersistent) {
 	const float InputValue = 42;
 	setPlantIn(InputValue);
-	ASSERT_TRUE(stepValueThroughDelayWithExpectedValue(0));
+	CHECK(stepValueThroughDelayWithExpectedValue(0));
 	for (int n = 0; n < 1e6; n++) {
 		plantTick();
-		ASSERT_EQ(getPlantOut(), InputValue);
+		LONGS_EQUAL(getPlantOut(), InputValue);
 	}
 }
 
-TEST_F(PlantTest, inputIsChangeable) {
+TEST(PlantTest, inputIsChangeable) {
 	const float InputValue1 = -12;
 	const float InputValue2 = 3564;
 
 	setPlantIn(InputValue1);
-	ASSERT_TRUE(stepValueThroughDelayWithExpectedValue(0));
+	CHECK(stepValueThroughDelayWithExpectedValue(0));
 	setPlantIn(InputValue2);
-	ASSERT_TRUE(stepValueThroughDelayWithExpectedValue(InputValue1));
+	CHECK(stepValueThroughDelayWithExpectedValue(InputValue1));
 	for (int n = 0; n < 1e6; n++) {
 		plantTick();
-		ASSERT_EQ(getPlantOut(), InputValue2);
+		LONGS_EQUAL(getPlantOut(), InputValue2);
 	}
 }
 

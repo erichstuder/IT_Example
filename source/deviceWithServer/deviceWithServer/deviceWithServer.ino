@@ -25,7 +25,7 @@ static inline void setBuiltinLedOn(void);
 static inline void setBuiltinLedOff(void);
 static inline void timerSetup(void);
 static inline bool byteFromUartAvailable(void);
-static inline AppError readByteFromUart(unsigned char* const data);
+static inline AppError readByteFromUart(char* const data);
 static inline AppError writeByteToUart(const unsigned char data);
 
 void setup(void){
@@ -38,6 +38,12 @@ void setup(void){
 	callbacks.writeByteToUart = writeByteToUart;
 	callbacks.getCurrentMillis = millis;
 	appInit(callbacks);
+}
+
+void setup_CppUTest(void){
+//The testframework CppUTest uses a function named "setup()" to initialize tests.
+//The solve the problem this wrapper is used.
+	setup();
 }
 
 void loop(void){
@@ -94,7 +100,7 @@ static inline bool byteFromUartAvailable(void){
 	return Serial.available() > 0;
 }
 
-inline static AppError readByteFromUart(unsigned char* const data){
+inline static AppError readByteFromUart(char* const data){
 	if(!Serial){ //TODO: brauchts das?
 		return AppError::UartUnavailable;
 	}
@@ -103,7 +109,7 @@ inline static AppError readByteFromUart(unsigned char* const data){
 		return AppError::NoDataAvailable;
 		
 	}else{
-		*data = (unsigned char)incomingByte;
+		*data = (char)incomingByte;
 	}
 	return AppError::NoError;
 }

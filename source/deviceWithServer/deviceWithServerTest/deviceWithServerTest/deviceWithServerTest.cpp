@@ -15,7 +15,9 @@
  * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
-#include "pch.h"
+#include "CppUTest/TestHarness.h"
+#include "CppUTestExt/MockSupport.h"
+#include "CppUTestExt/MockSupport_c.h"
 #include "Arduino.h"
 #include "app.h"
 
@@ -25,94 +27,88 @@ unsigned char TCCR1B;
 short OCR1A;
 unsigned char TIMSK1;
 
+extern void setup_CppUTest(void);
+extern void loop(void);
+
 unsigned long millis(void) { return 1042; }
 void pinMode(uint8_t, uint8_t) {}
 
-uint8_t writtenLedValue = LOW;
 void digitalWrite(uint8_t pin, uint8_t value) {
-	ASSERT_EQ(pin, 13);
-	writtenLedValue = value;
+	mock_c()->actualCall("digitalWrite")
+		->withIntParameters("pin", pin)
+		->withIntParameters("value", value);
 }
 
-extern void setup(void);
-extern void loop(void);
+void appInit_Mock(AppCallbacks_t callbacks) {
+	mock_c()->actualCall("appInit_Mock");
 
-void appInit_Spy(AppCallbacks_t callbacks) {
 	Serial.writeCalled = false;
-	ASSERT_EQ(callbacks.writeByteToUart(0xA8), AppError::NoError);
-	ASSERT_TRUE(Serial.writeCalled);
+	LONGS_EQUAL(callbacks.writeByteToUart(0xA8), AppError::NoError);
+	CHECK(Serial.writeCalled);
 
 	Serial.readCalled = false;
-	unsigned char myByte = 0;
-	ASSERT_EQ(callbacks.readByteFromUart(&myByte), AppError::NoError);
-	ASSERT_EQ(myByte, 42);
-	ASSERT_TRUE(Serial.readCalled);
+	char myByte = 0;
+	LONGS_EQUAL(callbacks.readByteFromUart(&myByte), AppError::NoError);
+	LONGS_EQUAL(myByte, 42);
+	CHECK(Serial.readCalled);
 
-	ASSERT_EQ(callbacks.getCurrentMillis(), 1042);
+	LONGS_EQUAL(callbacks.getCurrentMillis(), 1042);
 }
 
-bool appTickCalled;
-void appTick_Spy(void) {
-	appTickCalled = true;
+void appTick_Mock(void) {
+	mock_c()->actualCall("appTick_Mock");
 }
 
-class DeviceWithServerTest : public ::testing::Test {
-protected:
-	void (*appTick_Original)(void) = NULL;
-	void (*appInit_Original)(AppCallbacks_t callbacks) = NULL;
+TEST_GROUP(DeviceWithServerTest) {
+	void setup() { }
 
-	DeviceWithServerTest() {}
-
-	virtual ~DeviceWithServerTest() {}
-
-	virtual void SetUp() {
-		appInit_Original = appInit;
-		appInit = appInit_Spy;
-
-		appTick_Original = appTick;
-		appTick = appTick_Spy;
-
-		appTickCalled = false;
-	}
-
-	virtual void TearDown() {
-		appInit = appInit_Original;
-		appTick = appTick_Original;
+	void teardown() {
+		mock().checkExpectations();
+		mock().clear();
 	}
 };
 
-TEST_F(DeviceWithServerTest, setup) {
-	setup();
-	//timerSetup
-	ASSERT_EQ(TCCR1A, 0);
-	ASSERT_EQ(TCCR1B, 0x0D);
-	ASSERT_EQ(OCR1A, 15625);
-	ASSERT_EQ(TIMSK1, 0x02);
-	//Serial
-	ASSERT_EQ(Serial.baudRate, 9600);
+TEST(DeviceWithServerTest, setup) {
+	UT_PTR_SET(appInit, appInit_Mock);
+	mock().expectOneCall("appInit_Mock");
+
+	setup_CppUTest();
+	LONGS_EQUAL(TCCR1A, 0);
+	LONGS_EQUAL(TCCR1B, 0x0D);
+	LONGS_EQUAL(OCR1A, 15625);
+	LONGS_EQUAL(TIMSK1, 0x02);
+	LONGS_EQUAL(Serial.baudRate, 9600);
 }
 
-TEST_F(DeviceWithServerTest, loopNoEvent) {
-	writtenLedValue = HIGH;
+TEST(DeviceWithServerTest, loopNoEvent) {
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 0);
 	loop();
-	ASSERT_FALSE(appTickCalled);
-	ASSERT_EQ(writtenLedValue, LOW);
 }
 
-TEST_F(DeviceWithServerTest, loopEvent) {
-	writtenLedValue = LOW;
+TEST(DeviceWithServerTest, loopEvent) {
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
+	UT_PTR_SET(appTick, appTick_Mock);
+	mock().expectOneCall("appTick_Mock");
 	timerISR();
 	loop();
-	ASSERT_TRUE(appTickCalled);
-	ASSERT_EQ(writtenLedValue, HIGH);
 }
 
-TEST_F(DeviceWithServerTest, loopEventIsReset) {
+TEST(DeviceWithServerTest, loopEventIsReset) {
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 0);
+
+	UT_PTR_SET(appTick, appTick_Mock);
+	mock().expectOneCall("appTick_Mock");
+
 	timerISR();
 	loop();
-	writtenLedValue = HIGH;
-	appTickCalled = false;
 	loop();
-	ASSERT_FALSE(appTickCalled);
-	ASSERT_EQ(writtenLedValue, LOW);
 }

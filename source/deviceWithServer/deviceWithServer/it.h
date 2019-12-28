@@ -32,7 +32,7 @@ typedef enum {
 }ItError_t;
 
 typedef bool (*ByteFromClientAvailable_t) (void);
-typedef ItError_t (*ReadByteFromClient_t) (unsigned char* const data);
+typedef ItError_t (*ReadByteFromClient_t) (char* const data);
 typedef ItError_t (*WriteByteToClient_t) (const unsigned char data);
 typedef unsigned long (*GetTimestamp_t) (void);
 //typedef ItError_t (*CmdHandler_t) (ItCommandResult_t* result);

@@ -47,9 +47,8 @@ static char itInputBuffer[30];
 static ReadByteFromUart_t readByteFromUart;
 static WriteByteToUart_t writeByteToUart;
 
-static ItError_t readByteFromUart_withItError(unsigned char* const data);
+static ItError_t readByteFromUart_withItError(char* const data);
 static ItError_t writeByteToUart_withItError(const unsigned char data);
-//static ItError_t itCmdHandler(ItCommandResult_t* result);
 
 void appInit_Implementation(AppCallbacks_t callbacks){
 	setSquareWaveTickTime(APP_SAMPLETIME);
@@ -66,7 +65,6 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 	writeByteToUart = callbacks.writeByteToUart;
 	itCallbacks.writeByteToClient = writeByteToUart_withItError;
 	itCallbacks.getTimestamp = callbacks.getCurrentMillis;
-	//itCallbacks.itCmdHandler = itCmdHandler;
 	ItParameters_t itParameters;
 	itParameters.itInputBuffer = itInputBuffer;
 	itParameters.itInputBufferSize = sizeof(itInputBuffer);
@@ -76,7 +74,7 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 }
 void (*appInit)(AppCallbacks_t callbacks) = appInit_Implementation;
 
-static ItError_t readByteFromUart_withItError(unsigned char* const data) {
+static ItError_t readByteFromUart_withItError(char* const data) {
 	AppError err = readByteFromUart(data);
 	if (err == AppError::UartUnavailable) {
 		return ItError_ClientUnavailable;
@@ -103,20 +101,6 @@ static ItError_t writeByteToUart_withItError(const unsigned char data) {
 	}
 	return ItError_NoError;
 }
-
-/*static ItError_t itCmdHandler(ItCommandResult_t* result) {
-	ItError_t err = ItError_NoError;
-	if (strcmp((char*)itCmdBuffer, "desiredValue") == 0) {
-		result->valueType = ValueType_Float;
-		result->valueFloat = getSquareWaveSignal();
-		result->timestamp = getMillis();
-	}
-	else {
-		result->timestamp = 0;
-		err = ItError_InvalidCommand;
-	}
-	return err;
-}*/
 
 void appTick_Implementation(void){
 	setControllerDesiredValue( getSquareWaveSignal() );

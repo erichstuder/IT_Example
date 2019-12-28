@@ -18,10 +18,6 @@
 #ifndef APP_H
 #define APP_H
 
-/*extern "C" {
-#include "it.h"
-}*/
-
 #define APP_SAMPLETIME 1 //s
 
 enum class AppError {
@@ -33,7 +29,7 @@ enum class AppError {
 
 typedef unsigned long (*GetCurrentMillis_t) (void);
 typedef bool (*ByteFromUartAvailable_t) (void);
-typedef AppError (*ReadByteFromUart_t) (unsigned char* const data);
+typedef AppError (*ReadByteFromUart_t) (char* const data);
 typedef AppError (*WriteByteToUart_t) (const unsigned char data);
 
 typedef struct {
@@ -46,4 +42,4 @@ typedef struct {
 extern void (*appInit)(AppCallbacks_t callbacks);
 extern void (*appTick)(void);
 
-#endif //APP_H
+#endif

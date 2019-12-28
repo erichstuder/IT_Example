@@ -15,18 +15,16 @@
  * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
-#include "pch.h"
-
+#include "CppUTest/TestHarness.h"
+#include "CppUTestExt/MockSupport.h"
+#include "CppUTestExt/MockSupport_c.h"
 extern "C" {
 #include "it.h"
 }
 
-const unsigned char ItInputBufferSize = 30;
-char itInputBuffer[ItInputBufferSize];
+
 unsigned long timestamp;
 
-bool byteFromClientAvailable_done;
-bool readByteFromClient_done;
 ItError_t readByteFromClient_error;
 char readByteFromClient_buffer[256];
 unsigned char readByteFromClient_bytesLeft;
@@ -34,15 +32,14 @@ unsigned char readByteFromClient_bytesLeft;
 unsigned char writeByteToClient_buffer[256];
 unsigned char writeByteToClient_bufferCount;
 
-static bool byteFromClientAvailable_Spy(void) {
-	byteFromClientAvailable_done = true;
-	return true;
+static bool byteFromClientAvailable(void) {
+	mock_c()->actualCall("byteFromClientAvailable");
+	return readByteFromClient_bytesLeft > 0;
 }
 
-static ItError_t readByteFromClient_Spy(unsigned char* const data) {
-	readByteFromClient_done = true;
-
-	if (readByteFromClient_bytesLeft)
+static ItError_t readByteFromClient(char* const data) {
+	mock_c()->actualCall("readByteFromClient")->withOutputParameter("data", data);
+	if (readByteFromClient_bytesLeft > 0)
 	{
 		readByteFromClient_bytesLeft--;
 		*data = readByteFromClient_buffer[readByteFromClient_bytesLeft];
@@ -57,13 +54,14 @@ static ItError_t readByteFromClient_Spy(unsigned char* const data) {
 	}
 }
 
-static ItError_t writeByteToClient_Spy(const unsigned char data) {
+static ItError_t writeByteToClient(const unsigned char data) {
+	mock_c()->actualCall("writeByteToClient");
 	writeByteToClient_buffer[writeByteToClient_bufferCount] = data;
 	writeByteToClient_bufferCount++;
 #pragma warning(push)
 #pragma warning(disable : 26812)
 	return ItError_NoError;
-#pragma warning(pop) 
+#pragma warning(pop)
 }
 
 /*static ItError_t cmdHandler_Spy(ItCommandResult_t* result) {
@@ -101,7 +99,51 @@ static float floatFunction(void) {
 	return 1.26f;
 }
 
-class ItTest : public ::testing::Test {
+static ItCommandError_t parseCommand_Mock(const char* const command, ItCommandResult_t* result) {
+	mock_c()->actualCall("parseCommand_Mock");
+		//->withStringParameters("command", "")
+		//->withOutputParameter("result", NULL);
+	result = NULL;
+#pragma warning(push)
+#pragma warning(disable : 26812)
+	return ItCommandError_UnknownCommand;
+#pragma warning(pop)
+}
+
+const unsigned char ItInputBufferSize = 30;
+char itInputBuffer[ItInputBufferSize];
+
+TEST_GROUP(ItTest) {
+
+	void setup() {
+		UT_PTR_SET(parseCommand, parseCommand_Mock);
+
+		ItCallbacks_t callbacks;
+		callbacks.byteFromClientAvailable = byteFromClientAvailable;
+		callbacks.readByteFromClient = readByteFromClient;
+		callbacks.writeByteToClient = writeByteToClient;
+		/*callbacks.getTimestamp = getTimeStamp;*/
+		ItParameters_t itParameters;
+		itParameters.itInputBuffer = itInputBuffer;
+		itParameters.itInputBufferSize = ItInputBufferSize;
+		/*itParameters.itSignals = itSignals;
+		itParameters.itSignalCount = ItSignalCount;*/
+		itInit(&itParameters, &callbacks);
+	}
+
+	void teardown() {
+		mock().checkExpectations();
+		mock().clear();
+	}
+};
+
+/*void checkMocksMinimal(char* const readByteFromClient_buffer) {
+	mock().expectNCalls(2, "byteFromClientAvailable");
+	mock().expectOneCall("readByteFromClient")
+		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
+}*/
+
+/*class ItTest : public ::testing::Test {
 protected:
 
 	ItTest() {}
@@ -158,59 +200,75 @@ protected:
 		}
 		
 	}
-};
+};*/
 
-
-TEST_F(ItTest, readByteFromClient_called) {
-	ASSERT_EQ(byteFromClientAvailable_done, false);
-	ASSERT_EQ(readByteFromClient_done, false);
+TEST(ItTest, byteFromClientAvailable_called) {
+	readByteFromClient_bytesLeft = 0;
+	mock().expectOneCall("byteFromClientAvailable").andReturnValue(false);
 	itTick();
-	ASSERT_EQ(byteFromClientAvailable_done, true);
-	ASSERT_EQ(readByteFromClient_done, true);
 }
 
-TEST_F(ItTest, appendToBuffer) {
+TEST(ItTest, readByteFromClient_called) {
+	readByteFromClient_buffer[0] = 'x';
+	readByteFromClient_bytesLeft = 1;
+	mock().expectNCalls(2, "byteFromClientAvailable").andReturnValue(false);
+	mock().expectOneCall("readByteFromClient")
+		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]))
+		.andReturnValue(ItError_NoError);
+	itTick();
+}
+
+TEST(ItTest, appendToBuffer) {
 	readByteFromClient_buffer[0] = 'E';
 	readByteFromClient_bytesLeft = 1;
-
-	ASSERT_EQ(itInputBuffer[0], '\0');
+	mock().expectNCalls(2, "byteFromClientAvailable");
+	mock().expectOneCall("readByteFromClient")
+		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
+	LONGS_EQUAL(itInputBuffer[0], '\0');
 	itTick();
-	ASSERT_EQ(itInputBuffer[0], 'E');
+	LONGS_EQUAL(itInputBuffer[0], 'E');
 }
 
-TEST_F(ItTest, tooMuchInput) {
+TEST(ItTest, tooMuchInput) {
 	//no string-terminator
 	const char TestCommand[] = { '1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','\r' };
 	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
 		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand) - 1 - n]; //fill the other way round
 	}
-	readByteFromClient_bytesLeft = sizeof(TestCommand);
+	readByteFromClient_bytesLeft = sizeof(TestCommand) / sizeof(TestCommand[0]);
+
+	mock().expectNCalls(32, "byteFromClientAvailable");
+	mock().expectNCalls(31, "readByteFromClient")
+		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
+	mock().expectOneCall("parseCommand_Mock");
+	mock().expectNCalls(57, "writeByteToClient").andReturnValue(ItError_NoError);
 
 	itTick();
 
 	const unsigned char ExpectedTelegram[] = {'E','r','r','o','r',':',' ','I','n','p','u','t',' ','B','u','f','f','e','r',' ','i','s',' ','f','u','l','l','!','\n'};
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
 }
 
-TEST_F(ItTest, handleCmdInt8) {
+//TODO: add tests for correct telegram generation. => or do telegram generation in separated modul
+/*TEST(ItTest, handleCmdInt8) {
 	const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', '\r' }; //no string-terminator
 	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
 		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand)-1-n]; //fill the other way round
 	}
-	readByteFromClient_bytesLeft = sizeof(TestCommand);
+	readByteFromClient_bytesLeft = sizeof(TestCommand) / sizeof(TestCommand[0]);
 
 	timestamp = 0xAABBCCDD;
 
 	itTick();
 	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x00, 0x01, 0x11, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
 }
 
-TEST_F(ItTest, handleCmdUint8) {
+TEST(ItTest, handleCmdUint8) {
 	readByteFromClient_buffer[0] = '\r';
 	readByteFromClient_buffer[1] = 'A';
 	readByteFromClient_bytesLeft = 2;
@@ -220,11 +278,11 @@ TEST_F(ItTest, handleCmdUint8) {
 	itTick();
 	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'A', 0x00, 0x02, 0x45, 0x78, 0x56, 0x34, 0x12, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
 }
 
-TEST_F(ItTest, handleCmdFloat) {
+TEST(ItTest, handleCmdFloat) {
 	readByteFromClient_buffer[0] = '\r';
 	readByteFromClient_buffer[1] = 'B';
 	readByteFromClient_bytesLeft = 2;
@@ -234,6 +292,6 @@ TEST_F(ItTest, handleCmdFloat) {
 	itTick();
 	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'B', 0x00, 0x04, 0xAE, 0x47, 0XA1, 0x3F, 0xDD, 0xCC, 0xCB, 0x99, 0xCC, 0xA9, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		ASSERT_EQ(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
 	}
-}
+}*/

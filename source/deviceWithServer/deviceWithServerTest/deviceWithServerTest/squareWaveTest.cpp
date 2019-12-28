@@ -15,64 +15,56 @@
  * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
-#include "pch.h"
+#include "CppUTest/TestHarness.h"
 #include "squareWave.h"
+#include <algorithm>
 
-/*
-- value at start
-*/
-
-class SquareWaveTest : public ::testing::Test {
-protected:
-	SquareWaveTest() {}
-
-	virtual ~SquareWaveTest() {}
-
-	virtual void SetUp() {
+TEST_GROUP(SquareWaveTest) {
+	void setup() {
 		squareWaveReset();
 	}
 
-	virtual void TearDown() {
+	void teardown()	{
 		squareWaveReset();
 	}
 };
 
-TEST_F(SquareWaveTest, squareWaveTickExists) {
+TEST(SquareWaveTest, squareWaveTickExists) {
 	squareWaveTick();
 }
 
-TEST_F(SquareWaveTest, initialSignal) {
+TEST(SquareWaveTest, initialSignal) {
 	for (int n = 0; n < 1e6; n++) {
-		ASSERT_EQ(getSquareWaveSignal(), 0);
+		LONGS_EQUAL(getSquareWaveSignal(), 0);
 		squareWaveTick();
 	}
 }
 
-TEST_F(SquareWaveTest, setTickTime) {
+TEST(SquareWaveTest, setTickTime) {
 	setSquareWaveTickTime(0);
 }
 
-TEST_F(SquareWaveTest, setSignalFrequency) {
+TEST(SquareWaveTest, setSignalFrequency) {
 	setSquareWaveFrequency(0);
 }
 
-TEST_F(SquareWaveTest, frquency1Hz) {
+TEST(SquareWaveTest, frquency1Hz) {
 	setSquareWaveTickTime(0.025f);
 	setSquareWaveFrequency(1);
 
 	for (int i = 0; i < 1e3; i++) {
 		for (int n = 0; n < 20; n++) {
 			squareWaveTick();
-			ASSERT_EQ(getSquareWaveSignal(), 0);
+			LONGS_EQUAL(getSquareWaveSignal(), 0);
 		}
 		for (int n = 0; n < 20; n++) {
 			squareWaveTick();
-			ASSERT_EQ(getSquareWaveSignal(), 1);
+			LONGS_EQUAL(getSquareWaveSignal(), 1);
 		}
 	}
 }
 
-TEST_F(SquareWaveTest, amplitude) {
+TEST(SquareWaveTest, amplitude) {
 	setSquareWaveLevels(-4, 67);
 	setSquareWaveTickTime(0.001f);
 	setSquareWaveFrequency(250);
@@ -86,13 +78,13 @@ TEST_F(SquareWaveTest, amplitude) {
 		maximum = std::max(maximum, signal);
 		minimum = std::min(minimum, signal);
 	}
-	ASSERT_EQ(maximum, 67);
-	ASSERT_EQ(minimum, -4);
+	LONGS_EQUAL(maximum, 67);
+	LONGS_EQUAL(minimum, -4);
 }
 
-TEST_F(SquareWaveTest, valueAtStart) {
+TEST(SquareWaveTest, valueAtStart) {
 	const float Level1 = -56;
 	setSquareWaveLevels(Level1, 2);
 
-	ASSERT_EQ(getSquareWaveSignal(), Level1);
+	LONGS_EQUAL(getSquareWaveSignal(), Level1);
 }

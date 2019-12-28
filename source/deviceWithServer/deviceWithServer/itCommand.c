@@ -32,7 +32,7 @@ void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount) {
 	signalCount = itSignalCount;
 }
 
-ItCommandError_t parseCommand(const char* const command, ItCommandResult_t* result) {
+static ItCommandError_t parseCommand_Implementation(const char* const command, ItCommandResult_t* result) {
 	unsigned char n;
 	unsigned char commandFound = 0;
 	for (n = 0; n < signalCount; n++) {
@@ -48,6 +48,10 @@ ItCommandError_t parseCommand(const char* const command, ItCommandResult_t* resu
 			case ItValueType_Uint8:
 				result->valueType = ItValueType_Uint8;
 				result->resultUint8 = ((unsigned char (*) (void)) signal.getter)();
+				break;
+			case ItValueType_Ulong:
+				result->valueType = ItValueType_Ulong;
+				result->resultUlong = ((unsigned long (*) (void)) signal.getter)();
 				break;
 			case ItValueType_Float:
 				result->valueType = ItValueType_Float;
@@ -80,7 +84,4 @@ ItCommandError_t parseCommand(const char* const command, ItCommandResult_t* resu
 	else {
 	}*/
 }
-
-
-
-
+ItCommandError_t (*parseCommand) (const char* const command, ItCommandResult_t* result) = parseCommand_Implementation;
