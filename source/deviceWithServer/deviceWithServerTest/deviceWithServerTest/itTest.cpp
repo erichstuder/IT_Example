@@ -22,7 +22,6 @@ extern "C" {
 #include "it.h"
 }
 
-
 unsigned long timestamp;
 
 ItError_t readByteFromClient_error;
@@ -64,25 +63,6 @@ static ItError_t writeByteToClient(const unsigned char data) {
 #pragma warning(pop)
 }
 
-/*static ItError_t cmdHandler_Spy(ItCommandResult_t* result) {
-	if (readByteFromClient_buffer[1] == 'A') {
-#pragma warning(push)
-#pragma warning(disable : 26812)
-		result->valueType = ItValueType_Uint8;
-#pragma warning(pop) 
-		result->resultInt8 = 0x45;
-	}
-	else if (readByteFromClient_buffer[1] == 'B') {
-		result->valueType = ItValueType_Float;
-		result->resultFloat = 1.26f;
-	}
-	else {
-		result->valueType = ItValueType_Int8;
-		result->resultInt8 = 0x11;
-	}
-	return ItError_NoError;
-}*/
-
 static unsigned long getTimeStamp(void) {
 	return timestamp;
 }
@@ -99,14 +79,14 @@ static float floatFunction(void) {
 	return 1.26f;
 }
 
-static ItCommandError_t parseCommand_Mock(const char* const command, ItCommandResult_t* result) {
+static ItError_t parseCommand_Mock(const char* const command, ItCommandResult_t* result) {
 	mock_c()->actualCall("parseCommand_Mock");
 		//->withStringParameters("command", "")
 		//->withOutputParameter("result", NULL);
 	result = NULL;
 #pragma warning(push)
 #pragma warning(disable : 26812)
-	return ItCommandError_UnknownCommand;
+	return ItError_UnknownCommand;
 #pragma warning(pop)
 }
 
@@ -116,6 +96,10 @@ char itInputBuffer[ItInputBufferSize];
 TEST_GROUP(ItTest) {
 
 	void setup() {
+		for (int n = 0; n < ItInputBufferSize; n++) {
+			itInputBuffer[n] = 0x00;
+		}
+
 		UT_PTR_SET(parseCommand, parseCommand_Mock);
 
 		ItCallbacks_t callbacks;
@@ -136,71 +120,6 @@ TEST_GROUP(ItTest) {
 		mock().clear();
 	}
 };
-
-/*void checkMocksMinimal(char* const readByteFromClient_buffer) {
-	mock().expectNCalls(2, "byteFromClientAvailable");
-	mock().expectOneCall("readByteFromClient")
-		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
-}*/
-
-/*class ItTest : public ::testing::Test {
-protected:
-
-	ItTest() {}
-
-	virtual ~ItTest() {}
-
-	virtual void SetUp() {
-		static ItSignal_t itSignals[] = {
-			{
-				"TestCommand",
-				ItValueType_Int8,
-				(void (*)(void)) int8Function,
-				NULL,
-			},
-			{
-				"A",
-				ItValueType_Uint8,
-				(void (*)(void)) uint8Function,
-				NULL,
-			},
-			{
-				"B",
-				ItValueType_Float,
-				(void (*)(void)) floatFunction,
-				NULL,
-			},
-		};
-		static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[0]);
-
-
-		ItCallbacks_t callbacks;
-		callbacks.byteFromClientAvailable = byteFromClientAvailable_Spy;
-		callbacks.readByteFromClient = readByteFromClient_Spy;
-		callbacks.writeByteToClient = writeByteToClient_Spy;
-		callbacks.getTimestamp = getTimeStamp;
-		ItParameters_t itParameters;
-		itParameters.itInputBuffer = itInputBuffer;
-		itParameters.itInputBufferSize = ItInputBufferSize;
-		itParameters.itSignals = itSignals;
-		itParameters.itSignalCount = ItSignalCount;
-
-		itInit(&itParameters, &callbacks);
-
-		readByteFromClient_done = false;
-		readByteFromClient_bytesLeft = 0;
-		readByteFromClient_error = ItError_NoError;
-
-		writeByteToClient_bufferCount = 0;
-	}
-
-	virtual void TearDown() {
-		for (unsigned char n = 0; n < ItInputBufferSize; n++) {
-			itInputBuffer[n] = '\0';
-		}
-		
-	}
-};*/
 
 TEST(ItTest, byteFromClientAvailable_called) {
 	readByteFromClient_bytesLeft = 0;
@@ -224,9 +143,9 @@ TEST(ItTest, appendToBuffer) {
 	mock().expectNCalls(2, "byteFromClientAvailable");
 	mock().expectOneCall("readByteFromClient")
 		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
-	LONGS_EQUAL(itInputBuffer[0], '\0');
+	LONGS_EQUAL('\0', itInputBuffer[0]);
 	itTick();
-	LONGS_EQUAL(itInputBuffer[0], 'E');
+	LONGS_EQUAL('E', itInputBuffer[0]);
 }
 
 TEST(ItTest, tooMuchInput) {
@@ -235,63 +154,18 @@ TEST(ItTest, tooMuchInput) {
 	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
 		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand) - 1 - n]; //fill the other way round
 	}
-	readByteFromClient_bytesLeft = sizeof(TestCommand) / sizeof(TestCommand[0]);
+	readByteFromClient_bytesLeft = sizeof(TestCommand);
 
 	mock().expectNCalls(32, "byteFromClientAvailable");
 	mock().expectNCalls(31, "readByteFromClient")
 		.withOutputParameterReturning("data", readByteFromClient_buffer, sizeof(readByteFromClient_buffer[0]));
 	mock().expectOneCall("parseCommand_Mock");
-	mock().expectNCalls(57, "writeByteToClient").andReturnValue(ItError_NoError);
+	mock().expectNCalls(65, "writeByteToClient").andReturnValue(ItError_NoError);
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = {'E','r','r','o','r',':',' ','I','n','p','u','t',' ','B','u','f','f','e','r',' ','i','s',' ','f','u','l','l','!','\n'};
+	const unsigned char ExpectedTelegram[] = {0xAA, 0x02, 'E','r','r','o','r',':',' ','I','n','p','u','t',' ','B','u','f','f','e','r',' ','i','s',' ','f','u','l','l','!','\n','\0', 0xBB};
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
+		LONGS_EQUAL(ExpectedTelegram[n], writeByteToClient_buffer[n]);
 	}
 }
-
-//TODO: add tests for correct telegram generation. => or do telegram generation in separated modul
-/*TEST(ItTest, handleCmdInt8) {
-	const unsigned char TestCommand[] = { 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', '\r' }; //no string-terminator
-	for (unsigned char n = 0; n < sizeof(TestCommand); n++) {
-		readByteFromClient_buffer[n] = TestCommand[sizeof(TestCommand)-1-n]; //fill the other way round
-	}
-	readByteFromClient_bytesLeft = sizeof(TestCommand) / sizeof(TestCommand[0]);
-
-	timestamp = 0xAABBCCDD;
-
-	itTick();
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'T', 'e', 's', 't', 'C', 'o', 'm', 'm', 'a', 'n', 'd', 0x00, 0x01, 0x11, 0xDD, 0xCC, 0xCB, 0xCC, 0xBA, 0xCC, 0xA9, 0xBB };
-	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
-	}
-}
-
-TEST(ItTest, handleCmdUint8) {
-	readByteFromClient_buffer[0] = '\r';
-	readByteFromClient_buffer[1] = 'A';
-	readByteFromClient_bytesLeft = 2;
-
-	timestamp = 0x12345678;
-
-	itTick();
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'A', 0x00, 0x02, 0x45, 0x78, 0x56, 0x34, 0x12, 0xBB };
-	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
-	}
-}
-
-TEST(ItTest, handleCmdFloat) {
-	readByteFromClient_buffer[0] = '\r';
-	readByteFromClient_buffer[1] = 'B';
-	readByteFromClient_bytesLeft = 2;
-
-	timestamp = 0xAA99CCDD;
-
-	itTick();
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'B', 0x00, 0x04, 0xAE, 0x47, 0XA1, 0x3F, 0xDD, 0xCC, 0xCB, 0x99, 0xCC, 0xA9, 0xBB };
-	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
-		LONGS_EQUAL(writeByteToClient_buffer[n], ExpectedTelegram[n]);
-	}
-}*/

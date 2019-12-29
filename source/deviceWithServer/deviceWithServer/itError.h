@@ -12,29 +12,22 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <://www.gnu.org/licenses/>.
  */
 
-#ifndef APP_H
-#define APP_H
+#ifndef IT_ERROR_H
+#define IT_ERROR_H
 
-#include "itError.h"
-
-#define APP_SAMPLETIME 1 //s
-
-typedef unsigned long (*GetCurrentMillis_t) (void);
-typedef bool (*ByteFromUartAvailable_t) (void);
-typedef ItError_t (*ReadByteFromUart_t) (char* const data);
-typedef ItError_t (*WriteByteToUart_t) (const unsigned char data);
-
-typedef struct {
-	ByteFromUartAvailable_t byteFromUartAvailable;
-	ReadByteFromUart_t readByteFromUart;
-	WriteByteToUart_t writeByteToUart;
-	GetCurrentMillis_t getCurrentMillis;
-} AppCallbacks_t;
-
-extern void (*appInit)(AppCallbacks_t callbacks);
-extern void (*appTick)(void);
+typedef enum {
+	ItError_NoError,
+	ItError_BufferFull,
+	ItError_ClientUnavailable,
+	ItError_ClientWriteError,
+	ItError_NoDataAvailable,
+	ItError_InvalidValueType,
+    ItError_InvalidCommand,
+    ItError_UnknownCommand,
+	ItError_Unknown,
+}ItError_t;
 
 #endif

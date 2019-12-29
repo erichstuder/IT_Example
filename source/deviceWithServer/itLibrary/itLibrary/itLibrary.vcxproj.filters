@@ -21,12 +21,18 @@
     <ClInclude Include="..\..\deviceWithServer\itCommand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\deviceWithServer\itTelegram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\deviceWithServer\it.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\deviceWithServer\itCommand.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deviceWithServer\itTelegram.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

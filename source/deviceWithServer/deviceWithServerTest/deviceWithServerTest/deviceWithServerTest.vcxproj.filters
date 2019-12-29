@@ -16,5 +16,7 @@
     <ClCompile Include="..\..\deviceWithServer\deviceWithServer.ino" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="appTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\itTelegram.c" />
+    <ClCompile Include="itTelegramTest.cpp" />
   </ItemGroup>
 </Project>

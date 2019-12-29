@@ -32,7 +32,7 @@ void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount) {
 	signalCount = itSignalCount;
 }
 
-static ItCommandError_t parseCommand_Implementation(const char* const command, ItCommandResult_t* result) {
+static ItError_t parseCommand_Implementation(const char* const command, ItCommandResult_t* result) {
 	unsigned char n;
 	unsigned char commandFound = 0;
 	for (n = 0; n < signalCount; n++) {
@@ -58,16 +58,16 @@ static ItCommandError_t parseCommand_Implementation(const char* const command, I
 				result->resultFloat = ((float (*) (void)) signal.getter)();
 				break;
 			default:
-				return ItCommandError_InvalidCommand;
+				return ItError_InvalidCommand;
 				break;
 			}
 			
 		}
 	}
 	if (commandFound == 0) {
-		return ItCommandError_UnknownCommand;
+		return ItError_UnknownCommand;
 	}
-	return ItCommandError_NoError;
+	return ItError_NoError;
 
 
 	/*const char* LogString = "log ";
@@ -84,4 +84,4 @@ static ItCommandError_t parseCommand_Implementation(const char* const command, I
 	else {
 	}*/
 }
-ItCommandError_t (*parseCommand) (const char* const command, ItCommandResult_t* result) = parseCommand_Implementation;
+ItError_t (*parseCommand) (const char* const command, ItCommandResult_t* result) = parseCommand_Implementation;

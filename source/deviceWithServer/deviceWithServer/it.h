@@ -19,30 +19,18 @@
 #define IT_H
 
 #include "itCommand.h"
-
-typedef enum {
-	ItError_NoError,
-	ItError_BufferFull,
-	ItError_ClientUnavailable,
-	ItError_ClientWriteError,
-	ItError_NoDataAvailable,
-	ItError_InvalidCommand,
-	ItError_InvalidValueType,
-	ItError_Unknown,
-}ItError_t;
+#include "itTelegram.h"
+#include "itError.h"
 
 typedef bool (*ByteFromClientAvailable_t) (void);
 typedef ItError_t (*ReadByteFromClient_t) (char* const data);
-typedef ItError_t (*WriteByteToClient_t) (const unsigned char data);
 typedef unsigned long (*GetTimestamp_t) (void);
-//typedef ItError_t (*CmdHandler_t) (ItCommandResult_t* result);
 
 typedef struct {
 	ByteFromClientAvailable_t byteFromClientAvailable;
 	ReadByteFromClient_t readByteFromClient;
 	WriteByteToClient_t writeByteToClient;
 	GetTimestamp_t getTimestamp;
-	//CmdHandler_t itCmdHandler;
 }ItCallbacks_t;
 
 typedef struct {

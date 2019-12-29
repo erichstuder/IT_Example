@@ -160,10 +160,12 @@
   <ItemGroup>
     <ClInclude Include="..\..\deviceWithServer\it.h" />
     <ClInclude Include="..\..\deviceWithServer\itCommand.h" />
+    <ClInclude Include="..\..\deviceWithServer\itTelegram.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\deviceWithServer\it.c" />
     <ClCompile Include="..\..\deviceWithServer\itCommand.c" />
+    <ClCompile Include="..\..\deviceWithServer\itTelegram.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

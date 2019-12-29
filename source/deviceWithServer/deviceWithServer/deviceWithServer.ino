@@ -25,8 +25,8 @@ static inline void setBuiltinLedOn(void);
 static inline void setBuiltinLedOff(void);
 static inline void timerSetup(void);
 static inline bool byteFromUartAvailable(void);
-static inline AppError readByteFromUart(char* const data);
-static inline AppError writeByteToUart(const unsigned char data);
+static inline ItError_t readByteFromUart(char* const data);
+static inline ItError_t writeByteToUart(const unsigned char data);
 
 void setup(void){
 	timerSetup();
@@ -100,26 +100,26 @@ static inline bool byteFromUartAvailable(void){
 	return Serial.available() > 0;
 }
 
-inline static AppError readByteFromUart(char* const data){
+inline static ItError_t readByteFromUart(char* const data){
 	if(!Serial){ //TODO: brauchts das?
-		return AppError::UartUnavailable;
+		return ItError_ClientUnavailable;
 	}
 	int incomingByte = Serial.read();
 	if(incomingByte == -1){
-		return AppError::NoDataAvailable;
+		return ItError_NoDataAvailable;
 		
 	}else{
 		*data = (char)incomingByte;
 	}
-	return AppError::NoError;
+	return ItError_NoError;
 }
 
-static inline AppError writeByteToUart(const unsigned char data){
+static inline ItError_t writeByteToUart(const unsigned char data){
 	if(!Serial){ //TODO: brauchts das?
-		return AppError::UartUnavailable;
+		return ItError_ClientUnavailable;
 	}
 	if(Serial.write(data) != 1){
-		return AppError::UartWriteError;
+		return ItError_ClientWriteError;
 	}
-	return AppError::NoError;
+	return ItError_NoError;
 }

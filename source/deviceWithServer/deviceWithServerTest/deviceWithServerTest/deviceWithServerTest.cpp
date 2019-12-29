@@ -43,12 +43,12 @@ void appInit_Mock(AppCallbacks_t callbacks) {
 	mock_c()->actualCall("appInit_Mock");
 
 	Serial.writeCalled = false;
-	LONGS_EQUAL(callbacks.writeByteToUart(0xA8), AppError::NoError);
+	LONGS_EQUAL(callbacks.writeByteToUart(0xA8), ItError_NoError);
 	CHECK(Serial.writeCalled);
 
 	Serial.readCalled = false;
 	char myByte = 0;
-	LONGS_EQUAL(callbacks.readByteFromUart(&myByte), AppError::NoError);
+	LONGS_EQUAL(callbacks.readByteFromUart(&myByte), ItError_NoError);
 	LONGS_EQUAL(myByte, 42);
 	CHECK(Serial.readCalled);
 

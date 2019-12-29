@@ -18,17 +18,13 @@
 #ifndef IT_COMMAND_H
 #define IT_COMMAND_H
 
-typedef enum {
-	ItCommandError_NoError,
-	ItCommandError_InvalidCommand,
-	ItCommandError_UnknownCommand,
-} ItCommandError_t;
+#include "itError.h"
 
 typedef enum {
-	ItValueType_Int8 = 0x01,
-	ItValueType_Uint8 = 0x02,
-	ItValueType_Ulong = 0x03,
-	ItValueType_Float = 0x04,
+	ItValueType_Int8,
+	ItValueType_Uint8,
+	ItValueType_Ulong,
+	ItValueType_Float,
 } ItValueType_t;
 
 typedef const struct {
@@ -50,6 +46,6 @@ typedef struct {
 } ItCommandResult_t;
 
 void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount);
-extern ItCommandError_t (*parseCommand) (const char* const command, ItCommandResult_t* result);
+extern ItError_t (*parseCommand) (const char* const command, ItCommandResult_t* result);
 
 #endif

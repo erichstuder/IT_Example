@@ -79,20 +79,20 @@ TEST_GROUP(ItCommandTest) {
 };
 
 TEST(ItCommandTest, UnknownCommand) {
-    ItCommandError_t err = parseCommand("ochotzgue", NULL);
-    LONGS_EQUAL(ItCommandError_UnknownCommand, err);
+    ItError_t err = parseCommand("ochotzgue", NULL);
+    LONGS_EQUAL(ItError_UnknownCommand, err);
 }
 
 TEST(ItCommandTest, InvalidCommand) {
     ItCommandResult_t result;
-    ItCommandError_t err = parseCommand("InvalidType", &result);
-    LONGS_EQUAL(ItCommandError_InvalidCommand, err);
+    ItError_t err = parseCommand("InvalidType", &result);
+    LONGS_EQUAL(ItError_InvalidCommand, err);
 }
 
 TEST(ItCommandTest, Int8) {
     ItCommandResult_t result;
-    ItCommandError_t err = parseCommand("Int8Value", &result);
-    LONGS_EQUAL(ItCommandError_NoError, err);
+    ItError_t err = parseCommand("Int8Value", &result);
+    LONGS_EQUAL(ItError_NoError, err);
     STRCMP_EQUAL("Int8Value", result.name);
     LONGS_EQUAL(ItValueType_Int8, result.valueType);
     LONGS_EQUAL(-42, result.resultInt8);
@@ -100,8 +100,8 @@ TEST(ItCommandTest, Int8) {
 
 TEST(ItCommandTest, Uint8) {
     ItCommandResult_t result;
-    ItCommandError_t err = parseCommand("desiredValue", &result);
-    LONGS_EQUAL(ItCommandError_NoError, err);
+    ItError_t err = parseCommand("desiredValue", &result);
+    LONGS_EQUAL(ItError_NoError, err);
     STRCMP_EQUAL("desiredValue", result.name);
     LONGS_EQUAL(ItValueType_Uint8, result.valueType);
     LONGS_EQUAL(201, result.resultUint8);
@@ -109,8 +109,8 @@ TEST(ItCommandTest, Uint8) {
 
 TEST(ItCommandTest, Ulong) {
     ItCommandResult_t result;
-    ItCommandError_t err = parseCommand("AAA", &result);
-    LONGS_EQUAL(ItCommandError_NoError, err);
+    ItError_t err = parseCommand("AAA", &result);
+    LONGS_EQUAL(ItError_NoError, err);
     STRCMP_EQUAL("AAA", result.name);
     LONGS_EQUAL(ItValueType_Ulong, result.valueType);
     LONGS_EQUAL(1000, result.resultUlong);
@@ -118,8 +118,8 @@ TEST(ItCommandTest, Ulong) {
 
 TEST(ItCommandTest, Float) {
     ItCommandResult_t result;
-    ItCommandError_t err = parseCommand("5674", &result);
-    LONGS_EQUAL(ItCommandError_NoError, err);
+    ItError_t err = parseCommand("5674", &result);
+    LONGS_EQUAL(ItError_NoError, err);
     STRCMP_EQUAL("5674", result.name);
     LONGS_EQUAL(ItValueType_Float, result.valueType);
     LONGS_EQUAL(63.8f, result.resultFloat);

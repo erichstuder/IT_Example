@@ -147,6 +147,7 @@
     <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
     <ClCompile Include="..\..\deviceWithServer\it.c" />
     <ClCompile Include="..\..\deviceWithServer\itCommand.c" />
+    <ClCompile Include="..\..\deviceWithServer\itTelegram.c" />
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
     <ClCompile Include="AllTests.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="controllerTest.cpp" />
     <ClCompile Include="deviceWithServerTest.cpp" />
     <ClCompile Include="itCommandTest.cpp" />
+    <ClCompile Include="itTelegramTest.cpp" />
     <ClCompile Include="itTest.cpp" />
     <ClCompile Include="plantTest.cpp" />
     <ClCompile Include="squareWaveTest.cpp" />

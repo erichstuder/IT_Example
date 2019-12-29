@@ -15,26 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef APP_H
-#define APP_H
+#ifndef IT_TELEGRAM_H
+#define IT_TELEGRAM_H
 
 #include "itError.h"
 
-#define APP_SAMPLETIME 1 //s
+#define TelegramStart 0xAA
+#define TelegramEnd 0xBB
+#define ReplacementMarker 0xCC
 
-typedef unsigned long (*GetCurrentMillis_t) (void);
-typedef bool (*ByteFromUartAvailable_t) (void);
-typedef ItError_t (*ReadByteFromUart_t) (char* const data);
-typedef ItError_t (*WriteByteToUart_t) (const unsigned char data);
+typedef ItError_t(*WriteByteToClient_t) (const unsigned char data);
 
-typedef struct {
-	ByteFromUartAvailable_t byteFromUartAvailable;
-	ReadByteFromUart_t readByteFromUart;
-	WriteByteToUart_t writeByteToUart;
-	GetCurrentMillis_t getCurrentMillis;
-} AppCallbacks_t;
-
-extern void (*appInit)(AppCallbacks_t callbacks);
-extern void (*appTick)(void);
+void itTelegramInit(WriteByteToClient_t writeByteToClientCallback);
+ItError_t itSendValueTelegram_Int8(const char* const valueName, signed char value, unsigned long timestamp);
+ItError_t itSendValueTelegram_Uint8(const char* const valueName, unsigned char value, unsigned long timestamp);
+ItError_t itSendValueTelegram_Ulong(const char* const valueName, unsigned long value, unsigned long timestamp);
+ItError_t itSendValueTelegram_Float(const char* const valueName, float value, unsigned long timestamp);
+ItError_t itSendStringTelegram(const char* const str);
 
 #endif

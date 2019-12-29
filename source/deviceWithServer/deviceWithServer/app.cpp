@@ -44,12 +44,6 @@ static ItSignal_t itSignals[] = {
 static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[0]);
 static char itInputBuffer[30];
 
-static ReadByteFromUart_t readByteFromUart;
-static WriteByteToUart_t writeByteToUart;
-
-static ItError_t readByteFromUart_withItError(char* const data);
-static ItError_t writeByteToUart_withItError(const unsigned char data);
-
 void appInit_Implementation(AppCallbacks_t callbacks){
 	setSquareWaveTickTime(APP_SAMPLETIME);
 	setSquareWaveFrequency(0.2f);
@@ -60,10 +54,8 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 
 	ItCallbacks_t itCallbacks;
 	itCallbacks.byteFromClientAvailable = callbacks.byteFromUartAvailable;
-	readByteFromUart = callbacks.readByteFromUart;
-	itCallbacks.readByteFromClient = readByteFromUart_withItError;
-	writeByteToUart = callbacks.writeByteToUart;
-	itCallbacks.writeByteToClient = writeByteToUart_withItError;
+	itCallbacks.readByteFromClient = callbacks.readByteFromUart;
+	itCallbacks.writeByteToClient = callbacks.writeByteToUart;
 	itCallbacks.getTimestamp = callbacks.getCurrentMillis;
 	ItParameters_t itParameters;
 	itParameters.itInputBuffer = itInputBuffer;
@@ -73,34 +65,6 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 	itInit(&itParameters, &itCallbacks);
 }
 void (*appInit)(AppCallbacks_t callbacks) = appInit_Implementation;
-
-static ItError_t readByteFromUart_withItError(char* const data) {
-	AppError err = readByteFromUart(data);
-	if (err == AppError::UartUnavailable) {
-		return ItError_ClientUnavailable;
-	}
-	else if (err == AppError::NoDataAvailable) {
-		return ItError_NoDataAvailable;
-	}
-	else if (err != AppError::NoError) {
-		return ItError_Unknown;
-	}
-	return ItError_NoError;
-}
-
-static ItError_t writeByteToUart_withItError(const unsigned char data) {
-	AppError err = writeByteToUart(data);
-	if (err == AppError::UartUnavailable) {
-		return ItError_ClientUnavailable;
-	}
-	else if (err == AppError::UartWriteError) {
-		return ItError_ClientWriteError;
-	}
-	else if (err != AppError::NoError) {
-		return ItError_Unknown;
-	}
-	return ItError_NoError;
-}
 
 void appTick_Implementation(void){
 	setControllerDesiredValue( getSquareWaveSignal() );
