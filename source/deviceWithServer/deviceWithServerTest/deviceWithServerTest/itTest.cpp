@@ -67,40 +67,59 @@ static float floatFunction(void) {
 	return 1.26f;
 }
 
-static ItError_t parseCommand_Mock(const char* const command, ItCommandResult_t* result) {
+static ItError_t parseCommand_Mock(const char* const command) {
 	mock_c()->actualCall("parseCommand_Mock")
 		->withPointerParameters("command", (void *)command);
-		//->withStringParameters("command", command);
-		//->withOutputParameter("result", NULL);
-	*result = *((ItCommandResult_t*)mock_c()->getData("result").value.pointerValue);
 	return (ItError_t)mock_c()->returnValue().value.intValue;
 }
 
 const unsigned char ItInputBufferSize = 30;
 char itInputBuffer[ItInputBufferSize];
+static ItSignal_t itSignals[] = {
+	{
+		"itTestSignal",
+		ItValueType_Float,
+		(void (*)(void)) floatFunction,
+		NULL,
+	},
+};
+static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[0]);
+
+static void setupTestGroup(void) {
+	for (int n = 0; n < ItInputBufferSize; n++) {
+		itInputBuffer[n] = '\0';
+	}
+
+	writeByteToClient_bufferCount = 0;
+
+	ItCallbacks_t callbacks;
+	callbacks.byteFromClientAvailable = byteFromClientAvailable;
+	callbacks.readByteFromClient = readByteFromClient;
+	callbacks.writeByteToClient = writeByteToClient;
+	callbacks.getTimestamp = getTimeStamp;
+	ItParameters_t itParameters;
+	itParameters.itInputBuffer = itInputBuffer;
+	itParameters.itInputBufferSize = ItInputBufferSize;
+	itParameters.itSignals = itSignals;
+	itParameters.itSignalCount = ItSignalCount;
+	itInit(&itParameters, &callbacks);
+}
 
 TEST_GROUP(ItTest) {
-
 	void setup() {
-		for (int n = 0; n < ItInputBufferSize; n++) {
-			itInputBuffer[n] = '\0';
-		}
-
-		writeByteToClient_bufferCount = 0;
-
 		UT_PTR_SET(parseCommand, parseCommand_Mock);
+		setupTestGroup();
+	}
 
-		ItCallbacks_t callbacks;
-		callbacks.byteFromClientAvailable = byteFromClientAvailable;
-		callbacks.readByteFromClient = readByteFromClient;
-		callbacks.writeByteToClient = writeByteToClient;
-		callbacks.getTimestamp = getTimeStamp;
-		ItParameters_t itParameters;
-		itParameters.itInputBuffer = itInputBuffer;
-		itParameters.itInputBufferSize = ItInputBufferSize;
-		/*itParameters.itSignals = itSignals;
-		itParameters.itSignalCount = ItSignalCount;*/
-		itInit(&itParameters, &callbacks);
+	void teardown() {
+		mock().checkExpectations();
+		mock().clear();
+	}
+};
+
+TEST_GROUP(ItTest_NoMock) {
+	void setup() {
+		setupTestGroup();
 	}
 
 	void teardown() {
@@ -159,9 +178,8 @@ TEST(ItTest, readByteButClientUnavailable) {
 }
 
 TEST(ItTest, tooMuchInput) {
-	//no string-terminator
 	mock().strictOrder();
-	char readByteFromClient_buffer[] = { '1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','\r' };
+	char readByteFromClient_buffer[] = { '1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','1','2','3','4','5','6','7','8','9','_','\r' };//no string-terminator
 	for (unsigned char n = 0; n < 31; n++) {
 		mock().expectOneCall("byteFromClientAvailable").andReturnValue(true);
 		mock().expectOneCall("readByteFromClient")
@@ -171,8 +189,7 @@ TEST(ItTest, tooMuchInput) {
 	mock().expectNCalls(33, "writeByteToClient").andReturnValue(ItError_NoError);
 	ItCommandResult_t dummy;
 	mock().setData("result", &dummy);
-	mock().expectOneCall("parseCommand_Mock").withPointerParameter("command", itInputBuffer);
-	mock().expectNCalls(32, "writeByteToClient").andReturnValue(ItError_NoError);
+	mock().expectOneCall("parseCommand_Mock").withPointerParameter("command", itInputBuffer);;
 
 	mock().expectOneCall("byteFromClientAvailable").andReturnValue(false);
 
@@ -184,33 +201,24 @@ TEST(ItTest, tooMuchInput) {
 	}
 }
 
-TEST(ItTest, parseCommand) {
-	//no string-terminator
+TEST(ItTest_NoMock, parseCommand) {
 	mock().strictOrder();
-	char readByteFromClient_buffer[] = "myCommand\r";
+	char readByteFromClient_buffer[] = "itTestSignal\r";//no string-terminator
 	for (unsigned char n = 0; n < strlen(readByteFromClient_buffer); n++) {
 		mock().expectOneCall("byteFromClientAvailable").andReturnValue(true);
 		mock().expectOneCall("readByteFromClient")
 			.withOutputParameterReturning("data", &readByteFromClient_buffer[n], sizeof(readByteFromClient_buffer[0]));
 	}
 
-	ItCommandResult_t result;
-	result.name = "myName";
-	result.valueType = ItValueType_Float;
-	result.resultFloat = 32.8f;
-	mock().setData("result", &result);
-	mock().expectOneCall("parseCommand_Mock")
-		.withPointerParameter("command", itInputBuffer)
-		.andReturnValue((int)ItError_NoError);
 	mock().expectOneCall("getTimeStamp")
 		.andReturnValue(5263);
-	mock().expectNCalls(19, "writeByteToClient").andReturnValue(ItError_NoError);
+	mock().expectNCalls(25, "writeByteToClient").andReturnValue(ItError_NoError);
 
 	mock().expectOneCall("byteFromClientAvailable").andReturnValue(false);
 
 	itTick();
 
-	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'm','y','N','a','m','e','\0', 4, 0x33, 0x33, 0x03, 0x42, 0x8F, 0x14, 0x00, 0x00, 0xBB };
+	const unsigned char ExpectedTelegram[] = { 0xAA, 0x01, 'i','t','T','e','s','t','S','i','g','n','a','l','\0', 4, 0xAE, 0x47, 0xA1, 0x3F, 0x8F, 0x14, 0x00, 0x00, 0xBB };
 	for (unsigned char n = 0; n < sizeof(ExpectedTelegram); n++) {
 		LONGS_EQUAL(ExpectedTelegram[n], writeByteToClient_buffer[n]);
 	}
@@ -219,4 +227,3 @@ TEST(ItTest, parseCommand) {
 		LONGS_EQUAL('\0', itInputBuffer[n]);
 	}
 }
-

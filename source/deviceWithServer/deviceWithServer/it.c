@@ -26,15 +26,13 @@ static unsigned char inputBufferSize;
 static unsigned char inputBufferIndex;
 static bool inputBufferFull;
 
-static ItCommandResult_t commandResult;
-
 static ByteFromClientAvailable_t byteFromClientAvailable;
 static ReadByteFromClient_t readByteFromClient;
 static GetTimestamp_t getTimestamp;
 
 static void handleDataByte(unsigned char dataByte);
 static void handleCommandBufferError(ItError_t err);
-static ItError_t sendResult(void);
+static ItError_t sendResult(ItCommandResult_t* result);
 static ItError_t cmdBufferAppend(const char dataByte);
 static void clearCmdBuffer(void);
 
@@ -44,7 +42,7 @@ static void itInit_Implementation(ItParameters_t* parameters, ItCallbacks_t* cal
 	inputBufferIndex = 0;
 	inputBufferFull = false;
 
-	itCommandInit(parameters->itSignals, parameters->itSignalCount);
+	itCommandInit(parameters->itSignals, parameters->itSignalCount, sendResult);
 
 	byteFromClientAvailable = callbacks->byteFromClientAvailable;
 	readByteFromClient = callbacks->readByteFromClient;
@@ -89,16 +87,11 @@ static void handleDataByte(unsigned char dataByte) {
 		err = cmdBufferAppend('\0');
 		handleCommandBufferError(err);
 
-		commandErr = parseCommand(inputBuffer, &commandResult);
+		commandErr = parseCommand(inputBuffer);
 		if (commandErr != ItError_NoError) {
 			itSendStringTelegram("Error while parsing command.");
 			clearCmdBuffer(); //TOOD: kann dieser Aufruf an nur einer Stelle gemacht werden?
 			return;
-		}
-
-		err = sendResult();
-		if (err != ItError_NoError) {
-			itSendStringTelegram("Error while sending result.\n");
 		}
 
 		clearCmdBuffer(); 
@@ -121,19 +114,19 @@ static void handleCommandBufferError(ItError_t err) {
 	}
 }
 
-static ItError_t sendResult(void) {
-	switch (commandResult.valueType) {
+static ItError_t sendResult(ItCommandResult_t* result) {
+	switch (result->valueType) {
 	case ItValueType_Int8:
-		return itSendValueTelegram_Int8(commandResult.name, commandResult.resultInt8, getTimestamp());
+		return itSendValueTelegram_Int8(result->name, result->resultInt8, getTimestamp());
 		break;
 	case ItValueType_Uint8:
-		return itSendValueTelegram_Uint8(commandResult.name, commandResult.resultInt8, getTimestamp());
+		return itSendValueTelegram_Uint8(result->name, result->resultInt8, getTimestamp());
 		break;
 	case ItValueType_Ulong:
-		return itSendValueTelegram_Ulong(commandResult.name, commandResult.resultUlong, getTimestamp());
+		return itSendValueTelegram_Ulong(result->name, result->resultUlong, getTimestamp());
 		break;
 	case ItValueType_Float:
-		return itSendValueTelegram_Float(commandResult.name, commandResult.resultFloat, getTimestamp());
+		return itSendValueTelegram_Float(result->name, result->resultFloat, getTimestamp());
 		break;
 	default:
 		return ItError_InvalidValueType;

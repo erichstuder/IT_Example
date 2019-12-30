@@ -27,47 +27,50 @@ typedef struct {
 static ItSignal_t* signals;
 static unsigned char signalCount;
 
-void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount) {
+static SendCommandResult_t sendResult;
+
+void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount, SendCommandResult_t sendCommandResult) {
 	signals = itSignals;
 	signalCount = itSignalCount;
+	sendResult = sendCommandResult;
 }
 
-static ItError_t parseCommand_Implementation(const char* const command, ItCommandResult_t* result) {
+static ItError_t parseCommand_Implementation(const char* const command) {
+	ItCommandResult_t result;
 	unsigned char n;
 	unsigned char commandFound = 0;
 	for (n = 0; n < signalCount; n++) {
 		ItSignal_t signal = signals[n];
 		if (strcmp(signal.name, command) == 0) {
 			commandFound = 1;
-			result->name = command;
+			result.name = command;
 			switch (signal.valueType) {
 			case ItValueType_Int8:
-				result->valueType = ItValueType_Int8;
-				result->resultInt8 = ((signed char (*) (void)) signal.getter)();
+				result.valueType = ItValueType_Int8;
+				result.resultInt8 = ((signed char (*) (void)) signal.getter)();
 				break;
 			case ItValueType_Uint8:
-				result->valueType = ItValueType_Uint8;
-				result->resultUint8 = ((unsigned char (*) (void)) signal.getter)();
+				result.valueType = ItValueType_Uint8;
+				result.resultUint8 = ((unsigned char (*) (void)) signal.getter)();
 				break;
 			case ItValueType_Ulong:
-				result->valueType = ItValueType_Ulong;
-				result->resultUlong = ((unsigned long (*) (void)) signal.getter)();
+				result.valueType = ItValueType_Ulong;
+				result.resultUlong = ((unsigned long (*) (void)) signal.getter)();
 				break;
 			case ItValueType_Float:
-				result->valueType = ItValueType_Float;
-				result->resultFloat = ((float (*) (void)) signal.getter)();
+				result.valueType = ItValueType_Float;
+				result.resultFloat = ((float (*) (void)) signal.getter)();
 				break;
 			default:
 				return ItError_InvalidCommand;
 				break;
 			}
-			
 		}
 	}
 	if (commandFound == 0) {
 		return ItError_UnknownCommand;
 	}
-	return ItError_NoError;
+	return sendResult(&result);
 
 
 	/*const char* LogString = "log ";
@@ -84,4 +87,4 @@ static ItError_t parseCommand_Implementation(const char* const command, ItComman
 	else {
 	}*/
 }
-ItError_t (*parseCommand) (const char* const command, ItCommandResult_t* result) = parseCommand_Implementation;
+ItError_t (*parseCommand) (const char* const command) = parseCommand_Implementation;

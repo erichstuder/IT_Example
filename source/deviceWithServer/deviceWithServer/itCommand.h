@@ -45,7 +45,9 @@ typedef struct {
 	};
 } ItCommandResult_t;
 
-void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount);
-extern ItError_t (*parseCommand) (const char* const command, ItCommandResult_t* result);
+typedef ItError_t(*SendCommandResult_t) (ItCommandResult_t* result);
+
+void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount, SendCommandResult_t sendCommandResult);
+extern ItError_t (*parseCommand) (const char* const command);
 
 #endif
