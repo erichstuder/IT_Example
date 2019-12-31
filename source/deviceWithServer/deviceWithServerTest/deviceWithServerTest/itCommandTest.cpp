@@ -110,6 +110,7 @@ static ItSignal_t itSignals[] = {
 
 TEST_GROUP(ItCommandTest) {
     void setup() {
+        mock().strictOrder();
         itCommandInit(itSignals, sizeof(itSignals)/sizeof(itSignals[0]), sendCommandResult);
     }
 
@@ -121,16 +122,15 @@ TEST_GROUP(ItCommandTest) {
 
 TEST(ItCommandTest, UnknownCommand) {
     ItError_t err = parseCommand("ochotzgue");
-    LONGS_EQUAL(ItError_UnknownCommand, err);
+    LONGS_EQUAL(ItError_InvalidCommand, err);
 }
 
 TEST(ItCommandTest, InvalidCommand) {
     ItError_t err = parseCommand("InvalidType");
-    LONGS_EQUAL(ItError_InvalidCommand, err);
+    LONGS_EQUAL(ItError_InvalidValueType, err);
 }
 
 TEST(ItCommandTest, Int8) {
-    mock().strictOrder();
     mock().expectOneCall("getInt8").andReturnValue(-42);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "Int8Value")
@@ -142,7 +142,6 @@ TEST(ItCommandTest, Int8) {
 }
 
 TEST(ItCommandTest, Uint8) {
-    mock().strictOrder();
     mock().expectOneCall("getUint8").andReturnValue(201);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "desiredValue")
@@ -154,7 +153,6 @@ TEST(ItCommandTest, Uint8) {
 }
 
 TEST(ItCommandTest, Ulong) {
-    mock().strictOrder();
     mock().expectOneCall("getUlong").andReturnValue(1000);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "AAA")
@@ -166,7 +164,6 @@ TEST(ItCommandTest, Ulong) {
 }
 
 TEST(ItCommandTest, Float) {
-    mock().strictOrder();
     mock().expectOneCall("getFloat").andReturnValue(63.8f);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "5674")
@@ -177,12 +174,51 @@ TEST(ItCommandTest, Float) {
     LONGS_EQUAL(ItError_NoError, err);
 }
 
-/*TEST(ItCommandTest, logValidCommand) {
-    mock().expectOneCall("getFloat").andReturnValue(-3.1856f);
-    ItCommandResult_t result;
-    ItError_t err = parseCommand("log 5674", &result);
+TEST(ItCommandTest, logValidCommand) {
+    mock().expectNoCall("getFloat");
+    mock().expectNoCall("sendCommandResult");
+    ItError_t err = parseCommand("log 5674");
     LONGS_EQUAL(ItError_NoError, err);
-    STRCMP_EQUAL("5674", result.name);
-    LONGS_EQUAL(ItValueType_Float, result.valueType);
-    LONGS_EQUAL(63.8f, result.resultFloat);
-}*/
+}
+
+TEST(ItCommandTest, logInvalidCommand) {
+    mock().expectNoCall("getFloat");
+    mock().expectNoCall("sendCommandResult");
+    ItError_t err = parseCommand("log 5674_");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, logSignals) {
+    mock().expectOneCall("getUlong").andReturnValue(1000000);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "AAA")
+        .withParameter("result->resultUlong", 1000000)
+        .withParameter("result->valueType", ItValueType_Ulong)
+        .andReturnValue(ItError_NoError);
+    mock().expectOneCall("getInt8").andReturnValue(-99);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "Int8Value")
+        .withParameter("result->resultInt8", -99)
+        .withParameter("result->valueType", ItValueType_Int8)
+        .andReturnValue(ItError_NoError);
+
+    ItError_t err = parseCommand("log AAA");
+    LONGS_EQUAL(ItError_NoError, err);
+    err = parseCommand("log Int8Value");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    err = logSignals();
+}
+
+TEST(ItCommandTest, tooManySignalsToLog) {
+    mock().expectNoCall("getFloat");
+    mock().expectNoCall("sendCommandResult");
+    ItError_t err;
+    for (unsigned char n = 0; n < 10; n++) {
+        err = parseCommand("log 5674");
+        LONGS_EQUAL(ItError_NoError, err);
+    }
+    err = parseCommand("log 5674");
+    LONGS_EQUAL(ItError_MaximumOfLoggedSignalsReached, err);
+}
+

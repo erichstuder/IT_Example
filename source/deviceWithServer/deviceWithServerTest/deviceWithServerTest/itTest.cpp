@@ -73,6 +73,11 @@ static ItError_t parseCommand_Mock(const char* const command) {
 	return (ItError_t)mock_c()->returnValue().value.intValue;
 }
 
+static ItError_t logSignals_Mock(void) {
+	mock_c()->actualCall("logSignals_Mock");
+	return ItError_NoError;
+}
+
 const unsigned char ItInputBufferSize = 30;
 char itInputBuffer[ItInputBufferSize];
 static ItSignal_t itSignals[] = {
@@ -226,4 +231,11 @@ TEST(ItTest_NoMock, parseCommand) {
 	for (unsigned char n = 0; n < sizeof(itInputBuffer); n++) {
 		LONGS_EQUAL('\0', itInputBuffer[n]);
 	}
+}
+
+TEST(ItTest_NoMock, logSignals) {
+	UT_PTR_SET(logSignals, logSignals_Mock);
+	mock().expectOneCall("byteFromClientAvailable").andReturnValue(false);
+	mock().expectOneCall("logSignals_Mock");
+	itTick();
 }

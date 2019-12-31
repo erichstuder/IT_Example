@@ -26,7 +26,7 @@ typedef enum {
 	ItError_NoDataAvailable,
 	ItError_InvalidValueType,
     ItError_InvalidCommand,
-    ItError_UnknownCommand,
+    ItError_MaximumOfLoggedSignalsReached,
 	ItError_Unknown,
 }ItError_t;
 

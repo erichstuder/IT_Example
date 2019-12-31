@@ -71,6 +71,8 @@ static void itTick_Implementation(void){
 		}
 		handleDataByte(dataByte);
 	}
+
+	logSignals();
 }
 #ifdef ITLIBRARY_EXPORTS
 __declspec(dllexport) void itTick(void) {
