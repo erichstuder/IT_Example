@@ -25,7 +25,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # - this test has to be executed with pytest in the folder where it is located
 
 
-import mock
 import os
 from ctypes import *
 

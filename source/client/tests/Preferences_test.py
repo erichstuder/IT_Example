@@ -16,14 +16,12 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import app.Preferences as Preferences
-from unittest.mock import Mock
-from unittest.mock import patch
 import os
 from datetime import datetime
 
 
-@patch('app.Preferences.datetime', Mock(today=lambda: datetime(2019, 12, 20, 7, 7, 38, 484710)))
-def test_preferenceFileNotExisting():
+def test_preferenceFileNotExisting(mocker):
+    mocker.patch('app.Preferences.datetime', mocker.Mock(today=lambda: datetime(2019, 12, 20, 7, 7, 38, 484710)))
     FileName = 'testPreferencesJustCreated.test'
     if os.path.exists(FileName):
         os.remove(FileName)
