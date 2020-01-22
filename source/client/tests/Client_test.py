@@ -34,8 +34,7 @@ def test_inputFromKeyboard(mocker):
     textFromInput = 'This is a test. \n'
     keyboardInput_mocked = mocker.patch('builtins.input', return_value=textFromInput)
     client = Client.Client()
-    time.sleep(1)  # give enough time to read from keyboard
-    client.shutdown()
+    time.sleep(0.1)  # give enough time to read from keyboard
     keyboardInput_mocked.assert_called()
     a = client.getKeyboardInputQueue().get()
     assert client.getKeyboardInputQueue().get() == textFromInput

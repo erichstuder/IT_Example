@@ -42,20 +42,13 @@ def handleComPortInput(data):
 class Client:
     def __init__(self):
         self.__keyboardInputQueue = queue.Queue()
-        self.__running = True
         self.__keyboardReaderThread = threading.Thread(target=self.__keyboardReaderWorker)
+        self.__keyboardReaderThread.daemon = True
         self.__keyboardReaderThread.start()
 
     def __keyboardReaderWorker(self):
-        while self.__running:
-            # TODO: this will not run in real life, as "input" is blocking
+        while True:
             self.__keyboardInputQueue.put(input())
-
-    def shutdown(self):
-        self.__running = False
-        self.__keyboardReaderThread.join(3)
-        if self.__keyboardReaderThread.is_alive():
-            print('could not be ended')
 
     # only for testing at the moment
     def getKeyboardInputQueue(self):
