@@ -100,8 +100,25 @@ static void plantTick_Mock(void) {
 
 static void itInit_Mock(ItParameters_t* parameters, ItCallbacks_t* callbacks) {
 	mock_c()->actualCall("itInit_Mock");
+	
 	CHECK(parameters != NULL);
+	if (parameters != NULL) {
+		CHECK(parameters->itInputBuffer != NULL);
+		CHECK(parameters->itInputBufferSize != 0);
+		CHECK(parameters->itSignals != NULL);
+		CHECK(parameters->itSignalCount != 0);
+
+		if (parameters->itSignals != NULL) {
+			for (int n = 0; n < parameters->itSignalCount; n++) {
+				CHECK(parameters->itSignals[n].name != NULL);
+				CHECK(parameters->itSignals[n].getter != NULL);
+				//CHECK(parameters->itSignals->setter != NULL);//may be checked in future
+			}
+		}
+	}
+
 	CHECK(callbacks != NULL);
+	//TODO: check if callback functions are the same as expected
 }
 
 static void itTick_Mock(void) {

@@ -25,8 +25,6 @@ extern "C" {
 #include "it.h"
 }
 
-static GetCurrentMillis_t getMillis;
-
 static ItSignal_t itSignals[] = {
 	{
 		"desiredValue",
@@ -35,9 +33,9 @@ static ItSignal_t itSignals[] = {
 		NULL,
 	},
 	{
-		"time",
+		"plantOut",
 		ItValueType_Ulong,
-		(void (*)(void)) getMillis,
+		(void (*)(void)) getPlantOut,
 		NULL,
 	},
 };
