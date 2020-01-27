@@ -116,3 +116,17 @@ TEST(ControllerTest, actualValueStep) {
 	controllerTick();
 	LONGS_EQUAL(getControllerSignal(), -80);
 }
+
+TEST(ControllerTest, getKp) {
+	setControllerKp(2.3f);
+	LONGS_EQUAL(getControllerKp(), 2.3f);
+	setControllerKp(-789.4f);
+	LONGS_EQUAL(getControllerKp(), -789.4f);
+}
+
+TEST(ControllerTest, getKi) {
+	setControllerKp(345.67f);
+	LONGS_EQUAL(getControllerKp(), 345.67f);
+	setControllerKp(0);
+	LONGS_EQUAL(getControllerKp(), 0);
+}

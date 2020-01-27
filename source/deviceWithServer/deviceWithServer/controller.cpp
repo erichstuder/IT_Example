@@ -56,10 +56,18 @@ static void setControllerKp_Implementation(float value) {
 }
 void (*setControllerKp)(float value) = setControllerKp_Implementation;
 
+float getControllerKp(void) {
+    return Kp;
+}
+
 static void setControllerKi_Implementation(float value) {
 	Ki = value;
 }
 void (*setControllerKi)(float value) = setControllerKi_Implementation;
+
+float getControllerKi(void) {
+    return Ki;
+}
 
 static float getControllerSignal_Implementation(void) {
 	return signal;

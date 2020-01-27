@@ -23,7 +23,9 @@ void controllerReset(void);
 extern void (*setControllerDesiredValue)(float value);
 extern void (*setControllerActualValue)(float value);
 extern void (*setControllerKp)(float value);
+float getControllerKp(void);
 extern void (*setControllerKi)(float value);
+float getControllerKi(void);
 extern float (*getControllerSignal)(void);
 
 #endif

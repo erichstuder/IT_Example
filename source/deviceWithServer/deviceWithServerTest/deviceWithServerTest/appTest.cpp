@@ -112,7 +112,6 @@ static void itInit_Mock(ItParameters_t* parameters, ItCallbacks_t* callbacks) {
 			for (int n = 0; n < parameters->itSignalCount; n++) {
 				CHECK(parameters->itSignals[n].name != NULL);
 				CHECK(parameters->itSignals[n].getter != NULL);
-				//CHECK(parameters->itSignals->setter != NULL);//may be checked in future
 			}
 		}
 	}

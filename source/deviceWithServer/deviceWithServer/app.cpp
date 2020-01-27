@@ -33,10 +33,22 @@ static ItSignal_t itSignals[] = {
 		NULL,
 	},
 	{
-		"plantOut",
-		ItValueType_Ulong,
+		"actualValue",
+		ItValueType_Float,
 		(void (*)(void)) getPlantOut,
 		NULL,
+	},
+	{
+		"Kp",
+		ItValueType_Float,
+		(void (*)(void)) getControllerKp,
+		(void (*)(void)) setControllerKp,
+	},
+	{
+		"Ki",
+		ItValueType_Float,
+		(void (*)(void)) getControllerKi,
+		(void (*)(void)) setControllerKi,
 	},
 };
 static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[0]);
