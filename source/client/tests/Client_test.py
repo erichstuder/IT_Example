@@ -39,6 +39,4 @@ def test_inputFromKeyboard(mocker):
     a = client.getKeyboardInputQueue().get()
     assert client.getKeyboardInputQueue().get() == textFromInput
 
-# client starten
-# von tastatur eine Beispieleingabe mocken
-# prüfen ob diese richtig im buffer liegt
+

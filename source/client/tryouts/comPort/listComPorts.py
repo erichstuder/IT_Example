@@ -119,3 +119,4 @@ if sys.platform.startswith('win'):
         print("{:<6}".format(comPorts[i]) + ": " + comPortFriendlyNames[i])
 else:
     raise EnvironmentError('Unsupported platform')
+input()

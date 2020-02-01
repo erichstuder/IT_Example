@@ -21,11 +21,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # import sys
 # import os
 import queue
-# from app.ComPortHandler import ComPortHandler
+from app.ComPortHandler import ComPortHandler
 # from app.TextFileViewer import TextFileViewer
 # import app.Preferences as Preferences
 # from app.TelegramParser import TelegramParser
 import threading
+import time
 # from datetime import datetime
 
 """
@@ -45,6 +46,8 @@ class Client:
         self.__keyboardReaderThread = threading.Thread(target=self.__keyboardReaderWorker)
         self.__keyboardReaderThread.daemon = True
         self.__keyboardReaderThread.start()
+        self.__running = True
+        self.__comPortHandler = ComPortHandler()
 
     def __keyboardReaderWorker(self):
         while True:
@@ -54,9 +57,37 @@ class Client:
     def getKeyboardInputQueue(self):
         return self.__keyboardInputQueue
 
+    def run(self):
+        while self.__running:
+            while not self.__keyboardInputQueue.empty():
+                self.__keyboardInputParser(self.__keyboardInputQueue.get())
+
+            while True:
+                data = self.__comPortHandler.read()
+                if data is not None:
+                    with open('mySession.session', 'a+b') as sessionFile:
+                        sessionFile.write(data)
+                else:
+                    break
+
+            time.sleep(0.1)
+
+    def __keyboardInputParser(self, keyBoardInput):
+        if keyBoardInput == 'list comports':
+            self.__comPortHandler.getFriendlyNames()
+        elif keyBoardInput.startswith('start'):
+            self.__comPortHandler.configure(port='COM4', baudrate=9600)
+            print('started')
+        elif keyBoardInput == 'exit':
+            self.__running = False
+        else:
+            self.__comPortHandler.write(keyBoardInput + '\r')
+            print('sent: ' + keyBoardInput)
+            # send to server
+
 
 if __name__ == "__main__":
-    Client()
+    Client().run()
 
 # def __telegramReceived(telegram):
 #     with open(activeSession, 'a+') as logFile:

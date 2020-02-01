@@ -17,15 +17,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import serial  # install pyserial to gain access
+import sys
+import winreg
+import logging
 
 
 class ComPortHandler:
-    def __init__(self, port, baudrate):
+    def __init__(self):
         self.__serialPort = serial.Serial(None)
+        self.__onError = None
+
+    def configure(self, port, baudrate):
         self.__serialPort.port = port
         self.__serialPort.baudrate = baudrate
         self.__serialPort.timeout = 0
-        self.__onError = None
 
     def __open(self):
         try:
@@ -51,10 +56,88 @@ class ComPortHandler:
         try:
             value = self.__serialPort.read()
             if value != b'':
-                return ord(value)
+                return value
             else:
                 return None
         except serial.serialutil.SerialException as e:
             pass  # connection failed: most probably a problem with the other device or just not connected
         except Exception as e:
             self.__onError('Unexpected exception while reading from comport: ' + str(e))
+
+    def getFriendlyNames(self):
+        if sys.platform.startswith('win'):
+            keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DEVICEMAP\SERIALCOMM", 0, winreg.KEY_READ)
+            comPorts = []
+            i = 0
+            try:
+                while True:
+                    comPorts.append(winreg.EnumValue(keyHandle, i)[1])
+                    i += 1
+            except OSError as e:
+                if str(e) != r"[WinError 259] Es sind keine Daten mehr verfügbar":
+                    print("unexpected exception")
+            except Exception as e:
+                logging.exception(e)
+                print("unexpected exception")
+            winreg.CloseKey(keyHandle)
+
+            deviceParametersKeys = self.__getDeviceParametersKeys(r"SYSTEM\CurrentControlSet\Enum")
+
+            comPortKeys = [None] * len(comPorts)
+            for key in deviceParametersKeys:
+                try:
+                    keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key + "\\Device Parameters", 0,
+                                               winreg.KEY_READ)
+                    portName = winreg.QueryValueEx(keyHandle, "PortName")[0]
+                    for i in range(len(comPorts)):
+                        if portName == comPorts[i]:
+                            comPortKeys[i] = key
+                    winreg.CloseKey(keyHandle)
+                except OSError as e:
+                    if str(e) == r"[WinError 259] Es sind keine Daten mehr verfügbar":
+                        pass
+                    elif str(e) == r"[WinError 2] Das System kann die angegebene Datei nicht finden":
+                        pass
+                    else:
+                        print("unexpected exception")
+                except Exception as e:
+                    logging.exception(e)
+                    print("unexpected exception")
+
+            comPortFriendlyNames = []
+            for key in comPortKeys:
+                keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key, 0, winreg.KEY_READ)
+                comPortFriendlyNames.append(winreg.QueryValueEx(keyHandle, "FriendlyName")[0])
+                winreg.CloseKey(keyHandle)
+
+            print("COM ports with friendly name:")
+            i = 0
+            for i in range(len(comPorts)):
+                print("{:<6}".format(comPorts[i]) + ": " + comPortFriendlyNames[i])
+        else:
+            raise EnvironmentError('Unsupported platform')
+
+    def __getDeviceParametersKeys(self, _key):
+        _keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, _key, 0, winreg.KEY_READ)
+        _deviceParametersKeys = []
+        n = 0
+        try:
+            while True:
+                subKey = winreg.EnumKey(_keyHandle, n)
+                if subKey == r"Device Parameters":
+                    _deviceParametersKeys.append(_key)
+                else:
+                    _deviceParametersKeys += self.__getDeviceParametersKeys(_key + "\\" + subKey)
+                n += 1
+        except OSError as ex:
+            if str(ex) == r"[WinError 259] Es sind keine Daten mehr verfügbar":
+                pass
+            elif str(ex) == r"[WinError 5] Zugriff verweigert":
+                pass
+            else:
+                print("unexpected exception")
+        except Exception as ex:
+            logging.exception(ex)
+            print("unexpected exception")
+        winreg.CloseKey(_keyHandle)
+        return _deviceParametersKeys
