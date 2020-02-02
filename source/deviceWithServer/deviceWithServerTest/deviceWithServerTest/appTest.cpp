@@ -134,9 +134,13 @@ TEST_GROUP(AppTest) {
 	}
 };
 
+TEST(AppTest, applicationSampletime) {
+	LONGS_EQUAL(500000, APP_SAMPLETIME_US);
+}
+
 TEST(AppTest, appInitSettings) {
 	UT_PTR_SET(setSquareWaveTickTime, setSquareWaveTickTime_Mock);
-	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", 1.0f);
+	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", 0.5f);
 
 	UT_PTR_SET(setSquareWaveFrequency, setSquareWaveFrequency_Mock);
 	mock().expectOneCall("setSquareWaveFrequency_Mock").withParameter("signalFrequency", 0.2f);
