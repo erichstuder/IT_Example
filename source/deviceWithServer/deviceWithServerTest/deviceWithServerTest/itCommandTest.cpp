@@ -27,6 +27,10 @@ static signed char getInt8(void) {
     return (signed char)mock_c()->returnValue().value.intValue;
 }
 
+static void setInt8(signed char value) {
+    mock_c()->actualCall("setInt8")->withIntParameters("value", value);
+}
+
 static unsigned char getUint8(void) {
     mock_c()->actualCall("getUint8");
     return (unsigned char)mock_c()->returnValue().value.intValue;;
@@ -40,6 +44,10 @@ static unsigned long getUlong(void) {
 static float getFloat(void) {
     mock_c()->actualCall("getFloat");
     return (float)mock_c()->returnValue().value.doubleValue;
+}
+
+static void setFloat(float value) {
+    mock_c()->actualCall("setFloat")->withDoubleParameters("value", (double)value);
 }
 
 static ItError_t sendCommandResult(ItCommandResult_t* result) {
@@ -86,7 +94,7 @@ static ItSignal_t itSignals[] = {
         "Int8Value",
         ItValueType_Int8,
         (void (*)(void)) getInt8,
-        NULL,
+        (void (*)(void)) setInt8,
     },
     {
         "desiredValue",
@@ -104,7 +112,7 @@ static ItSignal_t itSignals[] = {
         "5674",
         ItValueType_Float,
         (void (*)(void)) getFloat,
-        NULL,
+        (void (*)(void)) setFloat,
     },
 };
 
@@ -122,6 +130,11 @@ TEST_GROUP(ItCommandTest) {
 
 TEST(ItCommandTest, UnknownCommand) {
     ItError_t err = parseCommand("ochotzgue");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, ValidCommandWithSpace) {
+    ItError_t err = parseCommand("desiredValue ");
     LONGS_EQUAL(ItError_InvalidCommand, err);
 }
 
@@ -222,3 +235,13 @@ TEST(ItCommandTest, tooManySignalsToLog) {
     LONGS_EQUAL(ItError_MaximumOfLoggedSignalsReached, err);
 }
 
+TEST(ItCommandTest, setFloat) {
+    mock().expectOneCall("setFloat")
+        .withParameter("value", 24.5);
+
+    //TODO: implement test
+    ItError_t err = parseCommand("5674 24.5");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    LONGS_EQUAL(1,2);
+}

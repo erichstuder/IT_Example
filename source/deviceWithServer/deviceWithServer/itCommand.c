@@ -16,6 +16,8 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include "itCommand.h"
 
@@ -26,12 +28,20 @@ struct {
 	unsigned char count;
 } loggedSignals;
 
+static const char* const LogCommandPrefix = "log ";
+
 static ItSignal_t* signals;
 static unsigned char signalCount;
 
 static SendCommandResult_t sendResult;
 
+static bool hasLogCommandFormat(const char* const command);
+static ItError_t handleLogCommand(const char* const command);
 static ItError_t addSignalToLog(ItSignal_t* signal);
+static bool hasSetCommandFormat(const char* const command);
+static ItError_t handleSetCommand(const char* const command);
+static bool hasRequestCommandFormat(const char* const command);
+static ItError_t handleRequestCommand(const char* const command);
 static ItError_t readSignalValue(ItSignal_t* signal);
 
 void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount, SendCommandResult_t sendCommandResult) {
@@ -44,27 +54,37 @@ void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount, SendComma
 }
 
 static ItError_t parseCommand_Implementation(const char* const command) {
-	const char* const LogId = "log ";
-	if (strstr(command, LogId) == command) {
-		for (int n = 0; n < signalCount; n++) {
-			if (strcmp(signals[n].name, command + strlen(LogId)) == 0) {
-				return addSignalToLog(&(signals[n]));
-			}
-		}
-		return ItError_InvalidCommand;
+	
+	if (hasLogCommandFormat(command)) {
+		return handleLogCommand(command);
+	}
+	else if (hasSetCommandFormat(command)) {
+		return handleSetCommand(command);
+	}
+	else if (hasRequestCommandFormat(command))	{
+		return handleRequestCommand(command);
 	}
 	else {
-		unsigned char n;
-		for (n = 0; n < signalCount; n++) {
-			ItSignal_t signal = signals[n];
-			if (strcmp(signal.name, command) == 0) {
-				return readSignalValue(&signal);
-			}
-		}
 		return ItError_InvalidCommand;
 	}
 }
 ItError_t (*parseCommand) (const char* const command) = parseCommand_Implementation;
+
+static bool hasLogCommandFormat(const char* const command) {
+	return strstr(command, LogCommandPrefix) == command;
+}
+
+static ItError_t handleLogCommand(const char* const command) {
+	unsigned char n;
+	for (n = 0; n < signalCount; n++) {
+		ItSignal_t* signalPtr = &(signals[n]);
+		const unsigned char LogCommandPrefixLength = strlen(LogCommandPrefix);
+		if (strcmp(signalPtr->name, command + LogCommandPrefixLength) == 0) {
+			return addSignalToLog(signalPtr);
+		}
+	}
+	return ItError_InvalidCommand;
+}
 
 static ItError_t addSignalToLog(ItSignal_t* signal) {
 	if (loggedSignals.nextFreeIndex >= LoggedSignalCapacity) {
@@ -74,6 +94,92 @@ static ItError_t addSignalToLog(ItSignal_t* signal) {
 	loggedSignals.nextFreeIndex++;
 	loggedSignals.count++;
 	return ItError_NoError;
+}
+
+static bool hasSetCommandFormat(const char* const command) {
+	unsigned char index = 0;
+	unsigned char spaceCount = 0;
+	while (command[index] != '\0') {
+		if (command[index] == ' ') {
+			spaceCount++;
+		}
+		index++;
+	}
+	return spaceCount == 1;
+}
+
+static ItError_t handleSetCommand(const char* const command) {
+	//signal suchen => wenn nicht gefunden, dann error
+	//danach muss ein Leerschlag kommen => wenn nicht, dann error
+	//den rest in zahl umwandeln => wenn nicht möglich, dann error
+
+	unsigned char signalIndex;
+	bool signalFound = false;
+	const char* signalName = "";
+	ItSignal_t signal;
+	for (signalIndex = 0; signalIndex < signalCount; signalIndex++) {
+		signalName = signals[signalIndex].name;
+		if (strstr(command, signalName) == command) {
+			signalFound = true;
+			break;
+		}
+	}
+	if (!signalFound) {
+		return ItError_InvalidCommand;
+	}
+
+	if (strlen(command) <= strlen(signalName)) {
+		return ItError_InvalidCommand;
+	}
+
+	if (command[strlen(signalName)] != ' ') {
+		return ItError_InvalidCommand;
+	}
+
+	const char* startPosition = strchr(command, ' ') + 1;
+	if (*startPosition == '\0') {
+		return ItError_InvalidCommand;
+	}
+
+	char* charAfterNumber;
+	double value = strtod(startPosition, &charAfterNumber);
+	if (*charAfterNumber != '\0') {
+		return ItError_InvalidCommand;
+	}
+
+	switch (signals[signalIndex].valueType) {
+	case ItValueType_Int8:
+		((void (*) (signed char))signals[signalIndex].setter)((signed char)value);
+		break;
+	case ItValueType_Uint8:
+		((void (*) (unsigned char))signals[signalIndex].setter)((unsigned char)value);
+		break;
+	case ItValueType_Ulong:
+		((void (*) (unsigned long))signals[signalIndex].setter)((unsigned long)value);
+		break;
+	case ItValueType_Float:
+		((void (*) (float))signals[signalIndex].setter)((float)value);
+		break;
+	default:
+		break;
+	}
+
+	return ItError_NoError;
+}
+
+static bool hasRequestCommandFormat(const char* const command) {
+	return !hasLogCommandFormat(command) && !hasSetCommandFormat(command);
+}
+
+static ItError_t handleRequestCommand(const char* const command) {
+	unsigned char n;
+	for (n = 0; n < signalCount; n++) {
+		ItSignal_t signal = signals[n];
+		if (strcmp(command, signal.name) == 0) {
+			return readSignalValue(&signal);
+		}
+	}
+	return ItError_InvalidCommand;
 }
 
 ItError_t logSignals_Implementation(void) {
