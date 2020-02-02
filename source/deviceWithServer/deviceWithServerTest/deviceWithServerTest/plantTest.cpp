@@ -19,7 +19,7 @@
 #include "plant.h"
 
 float stepValueThroughDelayWithExpectedValue(float expectedValueWhileStepping);
-const float ExpectedDelayLength = 10.0f;
+const unsigned char ExpectedDelayLength = 1;
 
 TEST_GROUP(PlantTest) {
 	void setup() {

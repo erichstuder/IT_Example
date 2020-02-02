@@ -43,13 +43,13 @@ void appInit_Mock(AppCallbacks_t callbacks) {
 	mock_c()->actualCall("appInit_Mock");
 
 	Serial.writeCalled = false;
-	LONGS_EQUAL(callbacks.writeByteToUart(0xA8), ItError_NoError);
+	LONGS_EQUAL(ItError_NoError, callbacks.writeByteToUart(0xA8));
 	CHECK(Serial.writeCalled);
 
 	Serial.readCalled = false;
 	char myByte = 0;
-	LONGS_EQUAL(callbacks.readByteFromUart(&myByte), ItError_NoError);
-	LONGS_EQUAL(myByte, 42);
+	LONGS_EQUAL(ItError_NoError, callbacks.readByteFromUart(&myByte));
+	LONGS_EQUAL(42, myByte);
 	CHECK(Serial.readCalled);
 
 	LONGS_EQUAL(callbacks.getCurrentMillis(), 1042);
@@ -73,11 +73,10 @@ TEST(DeviceWithServerTest, setup) {
 	mock().expectOneCall("appInit_Mock");
 
 	setup_CppUTest();
-	LONGS_EQUAL(TCCR1A, 0);
-	LONGS_EQUAL(TCCR1B, 0x0D);
-	LONGS_EQUAL(OCR1A, 15625);
-	LONGS_EQUAL(TIMSK1, 0x02);
-	LONGS_EQUAL(Serial.baudRate, 9600);
+	LONGS_EQUAL(0, TCCR1A);
+	LONGS_EQUAL(0x0D, TCCR1B);
+	LONGS_EQUAL(15625, OCR1A);
+	LONGS_EQUAL(0x02, TIMSK1);
 }
 
 TEST(DeviceWithServerTest, loopNoEvent) {

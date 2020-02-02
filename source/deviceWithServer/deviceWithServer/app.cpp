@@ -55,12 +55,12 @@ static const unsigned char ItSignalCount = sizeof(itSignals) / sizeof(itSignals[
 static char itInputBuffer[30];
 
 void appInit_Implementation(AppCallbacks_t callbacks){
-	setSquareWaveTickTime(APP_SAMPLETIME);
+	setSquareWaveTickTime(float(APP_SAMPLETIME_US / 1e6));
 	setSquareWaveFrequency(0.2f);
 	setSquareWaveLevels(2, 10);
 
-	setControllerKp(1);
-	setControllerKi(1);
+	setControllerKp(0.5);
+	setControllerKi(0);
 
 	ItCallbacks_t itCallbacks;
 	itCallbacks.byteFromClientAvailable = callbacks.byteFromUartAvailable;

@@ -64,6 +64,7 @@ class TelegramParser:
                 telegramNoValueName = TelegramParser.__parseValueName(telegram, telegramNoTelegramType)
                 telegramNoValueType = TelegramParser.__parseValueType(telegram, telegramNoValueName)
                 telegramNoValue = TelegramParser.__parseValue(telegram, telegramNoValueType)
+                telegramEmpty = TelegramParser.__parseTimestamp(telegram, telegramNoValue)
 
             elif telegram['telegramType'] == 'string':
                 pass  # todo Implement
@@ -105,11 +106,11 @@ class TelegramParser:
         name = ''
         nameLength = 0
         for byte in telegramNoTelegramType:
-            name += chr(byte)
-            nameLength += 1
             if byte == 0:
                 telegram['valueName'] = name
-                return telegramNoTelegramType[nameLength:]
+                return telegramNoTelegramType[nameLength+1:]
+            name += chr(byte)
+            nameLength += 1
 
     @staticmethod
     def __parseValueType(telegram, telegramNoValueName):
@@ -126,8 +127,15 @@ class TelegramParser:
     def __parseValue(telegram, telegramNoValueType):
         if telegram['valueType'] == 'ulong':
             telegram['value'] = struct.unpack('L', bytes(telegramNoValueType[:4]))[0]
+            return telegramNoValueType[4:]
         elif telegram['valueType'] == 'float':
             telegram['value'] = struct.unpack('f', bytes(telegramNoValueType[:4]))[0]
+            return telegramNoValueType[4:]
+
+    @staticmethod
+    def __parseTimestamp(telegram, telegramNoValue):
+        telegram['timestamp'] = struct.unpack('L', bytes(telegramNoValue[:4]))[0]
+        return telegramNoValue[4:]
 
 """
     __telegramRawOriginal = []

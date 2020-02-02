@@ -15,10 +15,8 @@ typedef unsigned char uint8_t;
 
 class HardwareSerial {
 public:
-	unsigned long baudRate;
 	bool readCalled;
 	bool writeCalled;
-	void begin(unsigned long baud) { baudRate = baud; }
 	int available(void) { return 1; }
 	int read(void) { 
 		readCalled = true;

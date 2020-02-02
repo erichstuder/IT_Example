@@ -31,7 +31,6 @@ static inline ItError_t writeByteToUart(const unsigned char data);
 void setup(void){
 	timerSetup();
 
-	Serial.begin(9600);
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable;
 	callbacks.readByteFromUart = readByteFromUart;
@@ -74,12 +73,17 @@ static inline void setBuiltinLedOff(void){
 
 static inline void timerSetup(void){
 	timerEvent=false;
-	#if APP_SAMPLETIME == 1
+	#if APP_SAMPLETIME_US == 1000000
 		TCCR1A = 0; //for any reason, this must be done!!
 		TCCR1B = _BV(WGM12) | _BV(CS12) | _BV(CS10); //match on value of OCR1A and divide clock by 1024
 		OCR1A = 15625; //1000ms
 		TIMSK1 = _BV(OCIE1A); //enable interrupt
-	/*#elif APP_SAMPLETIME == 1e-3
+	/*#elif APP_SAMPLETIME_US == 100000
+		TCCR1A = 0; //for any reason, this must be done!!
+		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
+		OCR1A = 6250; //100ms
+		TIMSK1 = _BV(OCIE1A); //enable interrupt
+	#elif APP_SAMPLETIME_US == 1000
 		TCCR1A = 0;
 		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
 		OCR1A = 16000; //1ms
