@@ -17,17 +17,11 @@
 
 #include "plant.h"
 
-static const unsigned char DelayLength = 1;
-static float delay[DelayLength] = { 0.0f };
-static float plantIn, plantOut;
+static float plantIn = 0;
+static float plantOut = 0;
 
 void plantTick_Implementation(void){
-	plantOut = delay[DelayLength-1];
-	unsigned char n;
-	for(n=DelayLength-1; n>0; n--){
-		delay[n] = delay[n-1];
-	}
-	delay[0] = plantIn;
+    plantOut = plantIn;
 }
 void (*plantTick)(void) = plantTick_Implementation;
 

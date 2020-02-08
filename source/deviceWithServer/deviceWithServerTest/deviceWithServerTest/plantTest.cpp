@@ -18,77 +18,29 @@
 #include "CppUTest/TestHarness.h"
 #include "plant.h"
 
-float stepValueThroughDelayWithExpectedValue(float expectedValueWhileStepping);
-const unsigned char ExpectedDelayLength = 1;
-
 TEST_GROUP(PlantTest) {
 	void setup() {
-		clearDelayBuffer();
 	}
 
 	void teardown() {
-		clearDelayBuffer();
-	}
-
-	void clearDelayBuffer() {
-		setPlantIn(0);
-		for (int n = 0; n < ExpectedDelayLength; n++) {
-			plantTick();
-		}
 	}
 };
 
-TEST(PlantTest, tickFunctionExists) {
-	plantTick();
-}
-
-TEST(PlantTest, plantInExists) {
-	setPlantIn((float)20);
-}
-
-TEST(PlantTest, plantOutInitialValue) {
-	LONGS_EQUAL(getPlantOut(), 0);
-}
-
-TEST(PlantTest, delayLength) {
-	const float InputValue = 1;
+TEST(PlantTest, inputToOutput) {
+	const float InputValue = 42;
 	setPlantIn(InputValue);
-	CHECK(stepValueThroughDelayWithExpectedValue(0));
 	plantTick();
 	LONGS_EQUAL(getPlantOut(), InputValue);
 }
 
-TEST(PlantTest, inputIsPersistent) {
-	const float InputValue = 42;
-	setPlantIn(InputValue);
-	CHECK(stepValueThroughDelayWithExpectedValue(0));
-	for (int n = 0; n < 1e6; n++) {
-		plantTick();
-		LONGS_EQUAL(getPlantOut(), InputValue);
-	}
-}
-
 TEST(PlantTest, inputIsChangeable) {
-	const float InputValue1 = -12;
-	const float InputValue2 = 3564;
+	float InputValue = 22222;
+	setPlantIn(InputValue);
+	plantTick();
+	LONGS_EQUAL(getPlantOut(), InputValue);
 
-	setPlantIn(InputValue1);
-	CHECK(stepValueThroughDelayWithExpectedValue(0));
-	setPlantIn(InputValue2);
-	CHECK(stepValueThroughDelayWithExpectedValue(InputValue1));
-	for (int n = 0; n < 1e6; n++) {
-		plantTick();
-		LONGS_EQUAL(getPlantOut(), InputValue2);
-	}
-}
-
-float stepValueThroughDelayWithExpectedValue(float expectedValueWhileStepping) {
-	for (int n = 0; n < ExpectedDelayLength; n++) {
-		plantTick();
-		float plantOut = getPlantOut();
-		if (plantOut != expectedValueWhileStepping) {
-			return false;
-		}
-	}
-	return true;
+	InputValue = -30.932f;
+	setPlantIn(InputValue);
+	plantTick();
+	LONGS_EQUAL(getPlantOut(), InputValue);
 }
