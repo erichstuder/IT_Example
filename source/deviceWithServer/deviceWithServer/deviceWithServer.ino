@@ -20,6 +20,7 @@
 #include "app.h"
 
 static bool timerEvent = false;
+static unsigned long tickMillis = 0;
 
 static inline void setBuiltinLedOn(void);
 static inline void setBuiltinLedOff(void);
@@ -28,18 +29,23 @@ static inline bool byteFromUartAvailable(void);
 static inline ItError_t readByteFromUart(char* const data);
 static inline ItError_t writeByteToUart(const unsigned char data);
 
+static unsigned long getTickMillis(void){
+	return tickMillis;
+}
+
 void setup(void){
+	timerEvent = false;
 	timerSetup();
 
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable;
 	callbacks.readByteFromUart = readByteFromUart;
 	callbacks.writeByteToUart = writeByteToUart;
-	callbacks.getCurrentMillis = millis;
+	callbacks.getCurrentMillis = getTickMillis;
 	appInit(callbacks);
 }
 
-void setup_CppUTest(void){
+void setup_ForCppUTest(void){
 //The testframework CppUTest uses a function named "setup()" to initialize tests.
 //The solve the problem this wrapper is used.
 	setup();
@@ -47,13 +53,14 @@ void setup_CppUTest(void){
 
 void loop(void){
 	if(!timerEvent){
-		setBuiltinLedOff();
+		setBuiltinLedOn();
 		return;
 	}
 	
-	setBuiltinLedOn();
+	setBuiltinLedOff();
  
 	timerEvent=false;
+	tickMillis = millis();
     appTick();
 }
 

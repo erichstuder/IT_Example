@@ -27,11 +27,19 @@ unsigned char TCCR1B;
 short OCR1A;
 unsigned char TIMSK1;
 
-extern void setup_CppUTest(void);
+extern void setup_ForCppUTest(void);
 extern void loop(void);
 
-unsigned long millis(void) { return 1042; }
-void pinMode(uint8_t, uint8_t) {}
+unsigned long millis(void) {
+	mock_c()->actualCall("millis");
+	return mock_c()->returnValue().value.intValue;
+}
+
+void pinMode(uint8_t pin, uint8_t value) {
+	mock_c()->actualCall("pinMode")
+		->withIntParameters("pin", pin)
+		->withIntParameters("value", value);
+}
 
 void digitalWrite(uint8_t pin, uint8_t value) {
 	mock_c()->actualCall("digitalWrite")
@@ -40,7 +48,8 @@ void digitalWrite(uint8_t pin, uint8_t value) {
 }
 
 void appInit_Mock(AppCallbacks_t callbacks) {
-	mock_c()->actualCall("appInit_Mock");
+	mock_c()->actualCall("appInit_Mock")
+		->withIntParameters("callbacks.getCurrentMillis", callbacks.getCurrentMillis());
 
 	Serial.writeCalled = false;
 	LONGS_EQUAL(ItError_NoError, callbacks.writeByteToUart(0xA8));
@@ -52,7 +61,7 @@ void appInit_Mock(AppCallbacks_t callbacks) {
 	LONGS_EQUAL(42, myByte);
 	CHECK(Serial.readCalled);
 
-	LONGS_EQUAL(callbacks.getCurrentMillis(), 1042);
+	/*LONGS_EQUAL(mock_c().actual, callbacks.getCurrentMillis());*/
 }
 
 void appTick_Mock(void) {
@@ -60,7 +69,9 @@ void appTick_Mock(void) {
 }
 
 TEST_GROUP(DeviceWithServerTest) {
-	void setup() { }
+	void setup() { 
+		mock().strictOrder();
+	}
 
 	void teardown() {
 		mock().checkExpectations();
@@ -70,26 +81,35 @@ TEST_GROUP(DeviceWithServerTest) {
 
 TEST(DeviceWithServerTest, setup) {
 	UT_PTR_SET(appInit, appInit_Mock);
-	mock().expectOneCall("appInit_Mock");
+	mock().expectOneCall("appInit_Mock")
+		.withParameter("callbacks.getCurrentMillis", 0);
 
-	setup_CppUTest();
+	setup_ForCppUTest();
 	LONGS_EQUAL(0, TCCR1A);
-	LONGS_EQUAL(0x0C, TCCR1B);
-	LONGS_EQUAL(31250, OCR1A);
+	LONGS_EQUAL(0x0D, TCCR1B);
+	LONGS_EQUAL(15625, OCR1A);
 	LONGS_EQUAL(0x02, TIMSK1);
 }
 
 TEST(DeviceWithServerTest, loopNoEvent) {
+	setup_ForCppUTest();
+	mock().expectOneCall("pinMode")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
 	mock().expectOneCall("digitalWrite")
 		.withParameter("pin", 13)
-		.withParameter("value", 0);
+		.withParameter("value", 1);
 	loop();
 }
 
 TEST(DeviceWithServerTest, loopEvent) {
-	mock().expectOneCall("digitalWrite")
+	mock().expectOneCall("pinMode")
 		.withParameter("pin", 13)
 		.withParameter("value", 1);
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 0);
+	mock().expectOneCall("millis");
 	UT_PTR_SET(appTick, appTick_Mock);
 	mock().expectOneCall("appTick_Mock");
 	timerISR();
@@ -97,17 +117,46 @@ TEST(DeviceWithServerTest, loopEvent) {
 }
 
 TEST(DeviceWithServerTest, loopEventIsReset) {
-	mock().expectOneCall("digitalWrite")
+	timerISR();
+
+	mock().expectOneCall("pinMode")
 		.withParameter("pin", 13)
 		.withParameter("value", 1);
 	mock().expectOneCall("digitalWrite")
 		.withParameter("pin", 13)
 		.withParameter("value", 0);
-
+	mock().expectOneCall("millis");
 	UT_PTR_SET(appTick, appTick_Mock);
 	mock().expectOneCall("appTick_Mock");
+	loop();
 
+	mock().expectOneCall("pinMode")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
+	loop();
+}
+
+TEST(DeviceWithServerTest, locallyStoredMillis) {
 	timerISR();
+
+	unsigned long CurrentMillis = 9876;
+	mock().expectOneCall("pinMode")
+		.withParameter("pin", 13)
+		.withParameter("value", 1);
+	mock().expectOneCall("digitalWrite")
+		.withParameter("pin", 13)
+		.withParameter("value", 0);
+	mock().expectOneCall("millis")
+		.andReturnValue(CurrentMillis);
+	UT_PTR_SET(appTick, appTick_Mock);
+	mock().expectOneCall("appTick_Mock");
 	loop();
-	loop();
+	
+	UT_PTR_SET(appInit, appInit_Mock);
+	mock().expectOneCall("appInit_Mock")
+		.withParameter("callbacks.getCurrentMillis", CurrentMillis);
+	setup_ForCppUTest();
 }
