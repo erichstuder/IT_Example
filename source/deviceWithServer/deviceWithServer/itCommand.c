@@ -29,17 +29,27 @@ struct {
 } loggedSignals;
 
 static const char* const LogCommandPrefix = "log ";
+static const char* const UnlogCommandPrefix = "unlog ";
 
 static ItSignal_t* signals;
 static unsigned char signalCount;
 
 static SendCommandResult_t sendResult;
 
+static bool hasResetCommandFormat(const char* const command);
+
 static bool hasLogCommandFormat(const char* const command);
 static ItError_t handleLogCommand(const char* const command);
 static ItError_t addSignalToLog(ItSignal_t* signal);
+
+static bool hasUnlogCommandFormat(const char* const command);
+static ItError_t handleUnlogCommand(const char* const command);
+static ItError_t removeFromLoggedSignals(ItSignal_t* signal);
+static void removeIndexFromLoggedSignals(unsigned char index);
+
 static bool hasSetCommandFormat(const char* const command);
 static ItError_t handleSetCommand(const char* const command);
+
 static bool hasRequestCommandFormat(const char* const command);
 static ItError_t handleRequestCommand(const char* const command);
 static ItError_t readSignalValue(ItSignal_t* signal);
@@ -54,9 +64,17 @@ void itCommandInit(ItSignal_t* itSignals, unsigned char itSignalCount, SendComma
 }
 
 static ItError_t parseCommand_Implementation(const char* const command) {
-	
-	if (hasLogCommandFormat(command)) {
+	if (hasResetCommandFormat(command))
+	{
+		loggedSignals.nextFreeIndex = 0;
+		loggedSignals.count = 0;
+		return ItError_NoError;
+	}
+	else if (hasLogCommandFormat(command)) {
 		return handleLogCommand(command);
+	}
+	else if (hasUnlogCommandFormat(command)) {
+		return handleUnlogCommand(command);
 	}
 	else if (hasSetCommandFormat(command)) {
 		return handleSetCommand(command);
@@ -69,6 +87,10 @@ static ItError_t parseCommand_Implementation(const char* const command) {
 	}
 }
 ItError_t (*parseCommand) (const char* const command) = parseCommand_Implementation;
+
+static bool hasResetCommandFormat(const char* const command) {
+	return strcmp(command, "reset") == 0;
+}
 
 static bool hasLogCommandFormat(const char* const command) {
 	return strstr(command, LogCommandPrefix) == command;
@@ -96,6 +118,42 @@ static ItError_t addSignalToLog(ItSignal_t* signal) {
 	return ItError_NoError;
 }
 
+static bool hasUnlogCommandFormat(const char* const command) {
+	return strstr(command, UnlogCommandPrefix) == command;
+}
+
+static ItError_t handleUnlogCommand(const char* const command) {
+	unsigned char n;
+	for (n = 0; n < signalCount; n++) {
+		ItSignal_t* signalPtr = &(signals[n]);
+		const unsigned char UnlogCommandPrefixLength = strlen(UnlogCommandPrefix);
+		if (strcmp(signalPtr->name, command + UnlogCommandPrefixLength) == 0) {
+			return removeFromLoggedSignals(signalPtr);
+		}
+	}
+	return ItError_InvalidCommand;
+}
+
+static ItError_t removeFromLoggedSignals(ItSignal_t* signal) {
+	unsigned char signalIndex;
+	for (signalIndex = 0; signalIndex < loggedSignals.count; signalIndex++) {
+		if (loggedSignals.signal[signalIndex] == signal) {
+			removeIndexFromLoggedSignals(signalIndex);
+			return ItError_NoError;
+		}
+	}
+	return ItError_InvalidCommand;
+}
+
+static void removeIndexFromLoggedSignals(unsigned char index) {
+	unsigned char signalIndex;
+	for (signalIndex = index; signalIndex < loggedSignals.count-1; signalIndex++) {
+		loggedSignals.signal[signalIndex] = loggedSignals.signal[signalIndex + 1];
+	}
+	loggedSignals.nextFreeIndex--;
+	loggedSignals.count--;
+}
+
 static bool hasSetCommandFormat(const char* const command) {
 	unsigned char index = 0;
 	unsigned char spaceCount = 0;
@@ -109,14 +167,9 @@ static bool hasSetCommandFormat(const char* const command) {
 }
 
 static ItError_t handleSetCommand(const char* const command) {
-	//signal suchen => wenn nicht gefunden, dann error
-	//danach muss ein Leerschlag kommen => wenn nicht, dann error
-	//den rest in zahl umwandeln => wenn nicht möglich, dann error
-
-	unsigned char signalIndex;
 	bool signalFound = false;
 	const char* signalName = "";
-	ItSignal_t signal;
+	unsigned char signalIndex;
 	for (signalIndex = 0; signalIndex < signalCount; signalIndex++) {
 		signalName = signals[signalIndex].name;
 		if (strstr(command, signalName) == command) {
@@ -125,10 +178,6 @@ static ItError_t handleSetCommand(const char* const command) {
 		}
 	}
 	if (!signalFound) {
-		return ItError_InvalidCommand;
-	}
-
-	if (strlen(command) <= strlen(signalName)) {
 		return ItError_InvalidCommand;
 	}
 
@@ -163,6 +212,8 @@ static ItError_t handleSetCommand(const char* const command) {
 	default:
 		break;
 	}
+	
+	readSignalValue(&(signals[signalIndex]));
 
 	return ItError_NoError;
 }

@@ -128,22 +128,22 @@ TEST_GROUP(ItCommandTest) {
     }
 };
 
-TEST(ItCommandTest, UnknownCommand) {
+TEST(ItCommandTest, UnknownGetCommand) {
     ItError_t err = parseCommand("ochotzgue");
     LONGS_EQUAL(ItError_InvalidCommand, err);
 }
 
-TEST(ItCommandTest, ValidCommandWithSpace) {
+TEST(ItCommandTest, ValidGetCommandWithSpace) {
     ItError_t err = parseCommand("desiredValue ");
     LONGS_EQUAL(ItError_InvalidCommand, err);
 }
 
-TEST(ItCommandTest, InvalidCommand) {
+TEST(ItCommandTest, InvalidGetCommand) {
     ItError_t err = parseCommand("InvalidType");
     LONGS_EQUAL(ItError_InvalidValueType, err);
 }
 
-TEST(ItCommandTest, Int8) {
+TEST(ItCommandTest, GetInt8) {
     mock().expectOneCall("getInt8").andReturnValue(-42);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "Int8Value")
@@ -154,7 +154,7 @@ TEST(ItCommandTest, Int8) {
     LONGS_EQUAL(ItError_NoError, err);
 }
 
-TEST(ItCommandTest, Uint8) {
+TEST(ItCommandTest, GetUint8) {
     mock().expectOneCall("getUint8").andReturnValue(201);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "desiredValue")
@@ -165,7 +165,7 @@ TEST(ItCommandTest, Uint8) {
     LONGS_EQUAL(ItError_NoError, err);
 }
 
-TEST(ItCommandTest, Ulong) {
+TEST(ItCommandTest, GetUlong) {
     mock().expectOneCall("getUlong").andReturnValue(1000);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "AAA")
@@ -176,7 +176,7 @@ TEST(ItCommandTest, Ulong) {
     LONGS_EQUAL(ItError_NoError, err);
 }
 
-TEST(ItCommandTest, Float) {
+TEST(ItCommandTest, GetFloat) {
     mock().expectOneCall("getFloat").andReturnValue(63.8f);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "5674")
@@ -236,12 +236,72 @@ TEST(ItCommandTest, tooManySignalsToLog) {
 }
 
 TEST(ItCommandTest, setFloat) {
+    const float Value = 24.5;
     mock().expectOneCall("setFloat")
-        .withParameter("value", 24.5);
+        .withParameter("value", Value);
+    mock().expectOneCall("getFloat").andReturnValue(Value);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "5674")
+        .withParameter("result->resultFloat", Value)
+        .withParameter("result->valueType", ItValueType_Float)
+        .andReturnValue(ItError_NoError);
 
-    //TODO: implement test
     ItError_t err = parseCommand("5674 24.5");
     LONGS_EQUAL(ItError_NoError, err);
+}
 
-    LONGS_EQUAL(1,2);
+TEST(ItCommandTest, SetSignalUnknown) {
+    ItError_t err = parseCommand("unknownSignalName 24.5");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, SetSignalNoSpaceAfterSignalName) {
+    ItError_t err = parseCommand("Int8Value_255");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, SetSignalNoValue) {
+    ItError_t err = parseCommand("Int8Value ");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, SetSignalBadValue) {
+    ItError_t err = parseCommand("Int8Value ae");
+    LONGS_EQUAL(ItError_InvalidCommand, err);
+}
+
+TEST(ItCommandTest, reset) {
+    ItError_t err = parseCommand("log desiredValue");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    mock().expectOneCall("getUint8").andReturnValue(77);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "desiredValue")
+        .withParameter("result->resultUint8", 77)
+        .withParameter("result->valueType", ItValueType_Uint8)
+        .andReturnValue(ItError_NoError);
+    logSignals();
+
+    err = parseCommand("reset");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    logSignals();
+}
+
+TEST(ItCommandTest, unlog) {
+    ItError_t err = parseCommand("log desiredValue");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    mock().expectOneCall("getUint8").andReturnValue(77);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "desiredValue")
+        .withParameter("result->resultUint8", 77)
+        .withParameter("result->valueType", ItValueType_Uint8)
+        .andReturnValue(ItError_NoError);
+    logSignals();
+
+    err = parseCommand("unlog desiredValue");
+    LONGS_EQUAL(ItError_NoError, err);
+
+    logSignals();
 }
