@@ -126,6 +126,7 @@ static void itTick_Mock(void) {
 
 TEST_GROUP(AppTest) {
 	void setup() {
+		mock().strictOrder();
 	}
 
 	void teardown() {
@@ -135,15 +136,15 @@ TEST_GROUP(AppTest) {
 };
 
 TEST(AppTest, applicationSampletime) {
-	LONGS_EQUAL(500000, APP_SAMPLETIME_US);
+	LONGS_EQUAL(1000000, APP_SAMPLETIME_US);
 }
 
 TEST(AppTest, appInitSettings) {
 	UT_PTR_SET(setSquareWaveTickTime, setSquareWaveTickTime_Mock);
-	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", 0.5f);
+	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", 1.0f);
 
 	UT_PTR_SET(setSquareWaveFrequency, setSquareWaveFrequency_Mock);
-	mock().expectOneCall("setSquareWaveFrequency_Mock").withParameter("signalFrequency", 0.2f);
+	mock().expectOneCall("setSquareWaveFrequency_Mock").withParameter("signalFrequency", 0.05f);
 
 	UT_PTR_SET(setSquareWaveLevels, setSquareWaveLevels_Mock);
 	mock().expectOneCall("setSquareWaveLevels_Mock")
@@ -151,16 +152,19 @@ TEST(AppTest, appInitSettings) {
 		.withParameter("level2", 10.0f);
 
 	UT_PTR_SET(setControllerKp, setControllerKp_Mock);
-	mock().expectOneCall("setControllerKp_Mock").withParameter("value", 0.5f);
+	mock().expectOneCall("setControllerKp_Mock").withParameter("value", 0.0f);
 
 	UT_PTR_SET(setControllerKi, setControllerKi_Mock);
-	mock().expectOneCall("setControllerKi_Mock").withParameter("value", 0.0f);
+	mock().expectOneCall("setControllerKi_Mock").withParameter("value", 1.3f);
 
 	AppCallbacks_t dummy = { NULL, NULL, NULL, NULL };
 	appInit(dummy);
 }
 
-TEST(AppTest, appTickWiring) {
+TEST(AppTest, appTickFunctionCallOrder) {
+	UT_PTR_SET(squareWaveTick, squareWaveTick_Mock);
+	mock().expectOneCall("squareWaveTick_Mock");
+
 	UT_PTR_SET(getSquareWaveSignal, getSquareWaveSignal_Mock);
 	UT_PTR_SET(setControllerDesiredValue, setControllerDesiredValue_Mock);
 	const float SquareWaveSignal = 5.0f;
@@ -173,26 +177,18 @@ TEST(AppTest, appTickWiring) {
 	mock().expectOneCall("getPlantOut_Mock").andReturnValue(PlantOut);
 	mock().expectOneCall("setControllerActualValue_Mock").withParameter("value", PlantOut);
 
+	UT_PTR_SET(controllerTick, controllerTick_Mock);
+	mock().expectOneCall("controllerTick_Mock");
+
 	UT_PTR_SET(getControllerSignal, getControllerSignal_Mock);
 	UT_PTR_SET(setPlantIn, setPlantIn_Mock);
 	const float ControllerSignal = 13.0f;
 	mock().expectOneCall("getControllerSignal_Mock").andReturnValue(ControllerSignal);
 	mock().expectOneCall("setPlantIn_Mock").withParameter("value", ControllerSignal);
 
-	//itTick is mocked here to prevent Null-Pointer Exception
-	UT_PTR_SET(itTick, itTick_Mock);
-	mock().expectOneCall("itTick_Mock");
-
-	appTick();
-}
-
-TEST(AppTest, appTickFunctions) {
-	UT_PTR_SET(squareWaveTick, squareWaveTick_Mock);
-	mock().expectOneCall("squareWaveTick_Mock");
-	UT_PTR_SET(controllerTick, controllerTick_Mock);
-	mock().expectOneCall("controllerTick_Mock");
 	UT_PTR_SET(plantTick, plantTick_Mock);
 	mock().expectOneCall("plantTick_Mock");
+
 	UT_PTR_SET(itTick, itTick_Mock);
 	mock().expectOneCall("itTick_Mock");
 

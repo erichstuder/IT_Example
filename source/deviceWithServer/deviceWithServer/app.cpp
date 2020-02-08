@@ -56,11 +56,11 @@ static char itInputBuffer[30];
 
 void appInit_Implementation(AppCallbacks_t callbacks){
 	setSquareWaveTickTime(float(APP_SAMPLETIME_US / 1e6));
-	setSquareWaveFrequency(0.2f);
+	setSquareWaveFrequency(0.05f);
 	setSquareWaveLevels(2, 10);
 
-	setControllerKp(0.5);
-	setControllerKi(0);
+	setControllerKp(0.0f);
+	setControllerKi(1.3f);
 
 	ItCallbacks_t itCallbacks;
 	itCallbacks.byteFromClientAvailable = callbacks.byteFromUartAvailable;
@@ -77,13 +77,13 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 void (*appInit)(AppCallbacks_t callbacks) = appInit_Implementation;
 
 void appTick_Implementation(void){
-	setControllerDesiredValue( getSquareWaveSignal() );
-	setControllerActualValue( getPlantOut() );
-	setPlantIn( getControllerSignal() );
-
 	squareWaveTick();
+	setControllerDesiredValue(getSquareWaveSignal());
+	setControllerActualValue(getPlantOut());
 	controllerTick();
+	setPlantIn(getControllerSignal());
 	plantTick();
+
 	itTick();
 }
 void (*appTick)(void) = appTick_Implementation;
