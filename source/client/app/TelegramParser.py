@@ -67,7 +67,7 @@ class TelegramParser:
                 telegramEmpty = TelegramParser.__parseTimestamp(telegram, telegramNoValue)
 
             elif telegram['telegramType'] == 'string':
-                pass  # todo Implement
+                telegramEmpty = TelegramParser.__parseString(telegram, telegramNoTelegramType)
             else:
                 raise ValueError('not implemented')
 
@@ -136,6 +136,17 @@ class TelegramParser:
     def __parseTimestamp(telegram, telegramNoValue):
         telegram['timestamp'] = struct.unpack('L', bytes(telegramNoValue[:4]))[0]
         return telegramNoValue[4:]
+
+    @staticmethod
+    def __parseString(telegram, telegramNoTelegramType):
+        name = ''
+        nameLength = 0
+        for byte in telegramNoTelegramType:
+            if byte == 0:
+                telegram['value'] = name
+                return telegramNoTelegramType[nameLength + 1:]
+            name += chr(byte)
+            nameLength += 1
 
 """
     __telegramRawOriginal = []
