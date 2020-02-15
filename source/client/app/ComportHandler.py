@@ -22,15 +22,17 @@ import winreg
 import logging
 
 
-class ComPortHandler:
+class ComportHandler:
     def __init__(self):
         self.__serialPort = serial.Serial(None)
+        self.__serialPort.timeout = 0
         self.__onError = None
 
-    def configure(self, port, baudrate):
+    def setPort(self, port):
         self.__serialPort.port = port
+
+    def setBaudrate(self, baudrate):
         self.__serialPort.baudrate = baudrate
-        self.__serialPort.timeout = 0
 
     def __open(self):
         try:
@@ -64,6 +66,9 @@ class ComPortHandler:
         except Exception as e:
             self.__onError('Unexpected exception while reading from comport: ' + str(e))
 
+
+""" 
+    friendly names is a feature that may be activated in future
     def getFriendlyNames(self):
         if sys.platform.startswith('win'):
             keyHandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DEVICEMAP\SERIALCOMM", 0, winreg.KEY_READ)
@@ -141,3 +146,4 @@ class ComPortHandler:
             print("unexpected exception")
         winreg.CloseKey(_keyHandle)
         return _deviceParametersKeys
+"""
