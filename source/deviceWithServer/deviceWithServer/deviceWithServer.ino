@@ -83,29 +83,23 @@ static inline void setBuiltinLedOff(void){
 
 static inline void timerSetup(void){
 	timerEvent=false;
+	TCCR1A = 0; //for any reason, this must be done!!
 	#if APP_SAMPLETIME_US == 1000000
-		TCCR1A = 0; //for any reason, this must be done!!
 		TCCR1B = _BV(WGM12) | _BV(CS12) | _BV(CS10); //match on value of OCR1A and divide clock by 1024
 		OCR1A = 15625; //1000ms
-		TIMSK1 = _BV(OCIE1A); //enable interrupt
 	#elif APP_SAMPLETIME_US == 500000
-		TCCR1A = 0; //for any reason, this must be done!!
 		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
 		OCR1A = 5*6250; //500ms
-		TIMSK1 = _BV(OCIE1A); //enable interrupt
-	/*#elif APP_SAMPLETIME_US == 100000
-		TCCR1A = 0; //for any reason, this must be done!!
+	#elif APP_SAMPLETIME_US == 100000
 		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
 		OCR1A = 6250; //100ms
-		TIMSK1 = _BV(OCIE1A); //enable interrupt
 	#elif APP_SAMPLETIME_US == 1000
-		TCCR1A = 0;
 		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
 		OCR1A = 16000; //1ms
-		TIMSK1 = _BV(OCIE1A); //enable interrupt*/
 	#else
 		#error APP_SAMPLETIME not supported
 	#endif
+	TIMSK1 = _BV(OCIE1A); //enable interrupt
 }
 
 ISR(TIMER1_COMPA_vect){
