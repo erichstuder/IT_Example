@@ -36,14 +36,14 @@ class Client:
 
     def run(self):
         while self.__running:
-            while True:
-                data = self.__comPortHandler.read()
-                if data is not None:
-                    with open("mySession.session", "a+b") as sessionFile:
+            with open("mySession.session", "a+b") as sessionFile:
+                while True:
+                    data = self.__comPortHandler.read()
+                    if data is not None:
                         sessionFile.write(data)
-                else:
-                    break
-            time.sleep(0.1)
+                    else:
+                        break
+            time.sleep(0.01)
 
     def __keyboardInputParser(self, keyboardInput):
         """ list comports may be activated in future
