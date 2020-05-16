@@ -19,6 +19,9 @@
 #include <Arduino.h>
 #include "app.h"
 
+//For compatibility with Linux the led pin is defined here.
+static const unsigned char OnBoardLedPin = 13;
+
 static bool timerEvent = false;
 static unsigned long tickMillis = 0;
 
@@ -61,21 +64,21 @@ void loop(void){
  
 	timerEvent=false;
 	tickMillis = millis();
-    appTick();
+	appTick();
 }
 
 static inline void initBuiltinLed(void){
-  pinMode(LED_BUILTIN, OUTPUT);
+	pinMode(OnBoardLedPin, OUTPUT);
 }
 
 static inline void setBuiltinLedOn(void){
-  initBuiltinLed();
-  digitalWrite(LED_BUILTIN, HIGH);
+	initBuiltinLed();
+	digitalWrite(OnBoardLedPin, HIGH);
 }
 
 static inline void setBuiltinLedOff(void){
-  initBuiltinLed();
-  digitalWrite(LED_BUILTIN, LOW);
+	initBuiltinLed();
+	digitalWrite(OnBoardLedPin, LOW);
 }
 
 static inline void timerSetup(void){
@@ -116,10 +119,7 @@ static inline bool byteFromUartAvailable(void){
 	return Serial.available() > 0;
 }
 
-inline static ItError_t readByteFromUart(char* const data){
-	if(!Serial){ //TODO: brauchts das?
-		return ItError_ClientUnavailable;
-	}
+static inline ItError_t readByteFromUart(char* const data){
 	int incomingByte = Serial.read();
 	if(incomingByte == -1){
 		return ItError_NoDataAvailable;
@@ -131,9 +131,6 @@ inline static ItError_t readByteFromUart(char* const data){
 }
 
 static inline ItError_t writeByteToUart(const unsigned char data){
-	if(!Serial){ //TODO: brauchts das?
-		return ItError_ClientUnavailable;
-	}
 	if(Serial.write(data) != 1){
 		return ItError_ClientWriteError;
 	}
