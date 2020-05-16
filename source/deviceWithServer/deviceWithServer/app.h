@@ -20,7 +20,7 @@
 
 #include "itError.h"
 
-#define APP_SAMPLETIME_US 1000000
+#define APP_SAMPLETIME_US 1000
 
 typedef unsigned long (*GetCurrentMillis_t) (void);
 typedef bool (*ByteFromUartAvailable_t) (void);
