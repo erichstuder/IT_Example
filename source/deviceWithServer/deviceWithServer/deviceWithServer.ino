@@ -107,9 +107,6 @@ ISR(TIMER1_COMPA_vect){
 }
 
 static inline bool byteFromUartAvailable(void){
-	if(!Serial){ //TODO: brauchts das?
-		return false;
-	}
 	return Serial.available() > 0;
 }
 
