@@ -19,9 +19,15 @@
 
 static float plantIn = 0;
 static float plantOut = 0;
+static const int DeadTimeLength = 20;
+static float deadTime[DeadTimeLength] = { 0 };
 
 void plantTick_Implementation(void){
-    plantOut = plantIn;
+    plantOut = deadTime[DeadTimeLength-1];
+    for (int n = DeadTimeLength-1; n > 0; n--) {
+        deadTime[n] = deadTime[n - 1];
+    }
+    deadTime[0] = plantIn;
 }
 void (*plantTick)(void) = plantTick_Implementation;
 
