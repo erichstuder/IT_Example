@@ -37,15 +37,14 @@ static unsigned long getTickMillis(void){
 }
 
 void setup(void){
-	timerEvent = false;
-	timerSetup();
-
 	AppCallbacks_t callbacks;
 	callbacks.byteFromUartAvailable = byteFromUartAvailable;
 	callbacks.readByteFromUart = readByteFromUart;
 	callbacks.writeByteToUart = writeByteToUart;
 	callbacks.getCurrentMillis = getTickMillis;
 	appInit(callbacks);
+
+	timerSetup();
 }
 
 void setup_ForCppUTest(void){
@@ -63,7 +62,6 @@ void loop(void){
 	setBuiltinLedOff();
  
 	timerEvent=false;
-	tickMillis = millis();
 	appTick();
 }
 
@@ -93,6 +91,9 @@ static inline void timerSetup(void){
 	#elif APP_SAMPLETIME_US == 100000
 		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
 		OCR1A = 6250; //100ms
+	#elif APP_SAMPLETIME_US == 2000
+		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
+		OCR1A = 32000; //2ms
 	#elif APP_SAMPLETIME_US == 1000
 		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
 		OCR1A = 16000; //1ms
@@ -103,6 +104,7 @@ static inline void timerSetup(void){
 }
 
 ISR(TIMER1_COMPA_vect){
+	tickMillis += APP_SAMPLETIME_US/1000;
 	timerEvent = true;
 }
 
