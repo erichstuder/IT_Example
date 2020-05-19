@@ -56,11 +56,11 @@ static char itInputBuffer[30];
 
 void appInit_Implementation(AppCallbacks_t callbacks){
 	setSquareWaveTickTime(float(APP_SAMPLETIME_US / 1e6));
-	setSquareWaveFrequency(0.05f);
+	setSquareWaveFrequency(0.5f);
 	setSquareWaveLevels(2, 10);
 
 	setControllerKp(0.0f);
-	setControllerKi(1.3f);
+	setControllerKi(0.05f);
 
 	ItCallbacks_t itCallbacks;
 	itCallbacks.byteFromClientAvailable = callbacks.byteFromUartAvailable;
