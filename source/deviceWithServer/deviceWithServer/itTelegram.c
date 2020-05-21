@@ -162,6 +162,7 @@ static ItError_t sendContentByte(const unsigned char data) {
         break;
     default:
         return writeByteToClient(data);
+        break;
     }
 }
 
