@@ -112,8 +112,8 @@ for a in dataSplitted1:
 """
 figure = plt.figure(1, figsize=(8, 4))
 plt.clf()
-plt.step([x/1000 for x in desiredValue_time], desiredValue_data, where='post')
-plt.step([x/1000 for x in plantOut_time], plantOut_data, 'x-', where='post')
+plt.step([x/1e6 for x in desiredValue_time], desiredValue_data, where='post')
+plt.step([x/1e6 for x in plantOut_time], plantOut_data, 'x-', where='post')
 # time.sleep(1)
 
 # plt.draw()
