@@ -79,6 +79,6 @@ class Client:
 
 
 if __name__ == "__main__":
-	os.system("mode 70,150")
+	os.system("mode 70,15")
 	os.system("title IT client")
 	Client().run()
