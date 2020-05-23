@@ -34,7 +34,9 @@ class ComportHandler:
     def setBaudrate(self, baudrate):
         self.__serialPort.baudrate = baudrate
 
-    def __open(self):
+    def open(self):
+        if self.__serialPort.is_open:
+            return
         try:
             self.__serialPort.open()
         except serial.serialutil.SerialException as e:
@@ -44,7 +46,9 @@ class ComportHandler:
 
     def write(self, data):
         if not self.__serialPort.is_open:
-            self.__open()
+            self.open()
+            while not self.__serialPort.is_open:
+                pass
         try:
             self.__serialPort.write(data.encode())
         except serial.serialutil.SerialException as e:
@@ -54,9 +58,11 @@ class ComportHandler:
 
     def read(self):
         if not self.__serialPort.is_open:
-            self.__open()
+            self.open()
+            while not self.__serialPort.is_open:
+                pass
         try:
-            value = self.__serialPort.read()
+            value = self.__serialPort.read(self.__serialPort.inWaiting())
             if value != b'':
                 return value
             else:
