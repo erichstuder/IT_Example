@@ -42,7 +42,6 @@ class ComportHandler:
 			return
 			
 		self.__serialPort.open()
-		print("opened")
 		while not self.__serialPort.is_open:
 			pass
 
