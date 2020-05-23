@@ -35,15 +35,15 @@ class Client:
             self.__keyboardInputParser(input().strip())
 
     def run(self):
-        while self.__running:
-            with open("mySession.session", "a+b") as sessionFile:
-                while True:
-                    data = self.__comPortHandler.read()
-                    if data is not None:
-                        sessionFile.write(data)
-                    else:
-                        break
-            time.sleep(0.01)
+        #while self.__running:
+        with open("mySession.session", "a+b") as sessionFile:
+            while True:
+                data = self.__comPortHandler.read()
+                if data is not None:
+                    sessionFile.write(data)
+                if not self.__running:
+                    break
+            #time.sleep(0.0001)
 
     def __keyboardInputParser(self, keyboardInput):
         """ list comports may be activated in future
