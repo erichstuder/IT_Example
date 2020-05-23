@@ -35,7 +35,6 @@ class Client:
             self.__keyboardInputParser(input().strip())
 
     def run(self):
-        #while self.__running:
         with open("mySession.session", "a+b") as sessionFile:
             while True:
                 data = self.__comPortHandler.read()
@@ -43,45 +42,44 @@ class Client:
                     sessionFile.write(data)
                 if not self.__running:
                     break
-            #time.sleep(0.0001)
 
     def __keyboardInputParser(self, keyboardInput):
         """ list comports may be activated in future
-        if keyboardInput == 'list comports':
+        if keyboardInput == "list comports":
             self.__comPortHandler.getFriendlyNames()
         el
         """
-        if keyboardInput.startswith('set comport '):
-            comPort = keyboardInput.split(' ')[2]
+        if keyboardInput.startswith("set comport "):
+            comPort = keyboardInput.split(" ")[2]
             self.__comPortHandler.setPort(port=comPort)
-            self.__printAnswer('comport set to: ' + comPort)
-        elif keyboardInput.startswith('set baudrate '):
-            baudrate = keyboardInput.split(' ')[2]
+            self.__printAnswer("comport set to: " + comPort)
+        elif keyboardInput.startswith("set baudrate "):
+            baudrate = keyboardInput.split(" ")[2]
             self.__comPortHandler.setBaudrate(baudrate=baudrate)
-            self.__printAnswer('baudrate set to: ' + baudrate)
-        elif keyboardInput.startswith('run '):
-            scriptFileName = keyboardInput.split(' ')[1]
+            self.__printAnswer("baudrate set to: " + baudrate)
+        elif keyboardInput.startswith("run "):
+            scriptFileName = keyboardInput.split(" ")[1]
             if os.path.isfile(scriptFileName):
-                self.__printAnswer('running: ' + scriptFileName)
-                with open(scriptFileName, 'r') as scriptFile:
+                self.__printAnswer("running: " + scriptFileName)
+                with open(scriptFileName, "r") as scriptFile:
                     for line in scriptFile:
                         self.__keyboardInputParser(line.strip())
             else:
-                self.__printAnswer('error: file not found')
-        elif keyboardInput == 'exit':
-            self.__printAnswer('goodbye...')
+                self.__printAnswer("error: file not found")
+        elif keyboardInput == "exit":
+            self.__printAnswer("goodbye...")
             self.__running = False
             time.sleep(0.5)
         else:
             self.__comPortHandler.write(keyboardInput + "\r")
-            self.__printAnswer('sent to server: ' + keyboardInput)
+            self.__printAnswer("sent to server: " + keyboardInput)
 
     @staticmethod
     def __printAnswer(answer):
-        print('  ' + answer)
+        print(">>  " + answer)
 
 
 if __name__ == "__main__":
-    os.system('mode 70,15')
+    os.system("mode 70,15")
     os.system("title IT client")
     Client().run()
