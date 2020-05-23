@@ -23,63 +23,62 @@ import os
 
 
 class Client:
-    def __init__(self):
-        self.__running = True
-        self.__comPortHandler = ComportHandler()
-        self.__keyboardReaderThread = threading.Thread(target=self.__keyboardReaderWorker)
-        self.__keyboardReaderThread.daemon = True
-        self.__keyboardReaderThread.start()
+	def __init__(self):
+		self.__running = True
+		self.__comPortHandler = ComportHandler(self.__printAnswer)
+		self.__keyboardReaderThread = threading.Thread(target=self.__keyboardReaderWorker)
+		self.__keyboardReaderThread.daemon = True
+		self.__keyboardReaderThread.start()
 
-    def __keyboardReaderWorker(self):
-        while self.__running:
-            self.__keyboardInputParser(input().strip())
+	def __keyboardReaderWorker(self):
+		while self.__running:
+			self.__keyboardInputParser(input().strip())
 
-    def run(self):
-        with open("mySession.session", "a+b") as sessionFile:
-            while True:
-                data = self.__comPortHandler.read()
-                if data is not None:
-                    sessionFile.write(data)
-                if not self.__running:
-                    break
+	def run(self):
+		with open("mySession.session", "a+b") as sessionFile:
+			while True:
+				data = self.__comPortHandler.read()
+				if data is not None:
+					sessionFile.write(data)
+				if not self.__running:
+					break
 
-    def __keyboardInputParser(self, keyboardInput):
-        """ list comports may be activated in future
-        if keyboardInput == "list comports":
-            self.__comPortHandler.getFriendlyNames()
-        el
-        """
-        if keyboardInput.startswith("set comport "):
-            comPort = keyboardInput.split(" ")[2]
-            self.__comPortHandler.setPort(port=comPort)
-            self.__printAnswer("comport set to: " + comPort)
-        elif keyboardInput.startswith("set baudrate "):
-            baudrate = keyboardInput.split(" ")[2]
-            self.__comPortHandler.setBaudrate(baudrate=baudrate)
-            self.__printAnswer("baudrate set to: " + baudrate)
-        elif keyboardInput.startswith("run "):
-            scriptFileName = keyboardInput.split(" ")[1]
-            if os.path.isfile(scriptFileName):
-                self.__printAnswer("running: " + scriptFileName)
-                with open(scriptFileName, "r") as scriptFile:
-                    for line in scriptFile:
-                        self.__keyboardInputParser(line.strip())
-            else:
-                self.__printAnswer("error: file not found")
-        elif keyboardInput == "exit":
-            self.__printAnswer("goodbye...")
-            self.__running = False
-            time.sleep(0.5)
-        else:
-            self.__comPortHandler.write(keyboardInput + "\r")
-            self.__printAnswer("sent to server: " + keyboardInput)
+	def __keyboardInputParser(self, keyboardInput):
+		""" list comports may be activated in future
+		if keyboardInput == "list comports":
+			self.__comPortHandler.getFriendlyNames()
+		el
+		"""
+		if keyboardInput.startswith("set comport "):
+			comPort = keyboardInput.split(" ")[2]
+			self.__comPortHandler.setPort(port=comPort)
+			self.__printAnswer("comport set to: " + comPort)
+		elif keyboardInput.startswith("set baudrate "):
+			baudrate = keyboardInput.split(" ")[2]
+			self.__comPortHandler.setBaudrate(baudrate=baudrate)
+			self.__printAnswer("baudrate set to: " + baudrate)
+		elif keyboardInput.startswith("run "):
+			scriptFileName = keyboardInput.split(" ")[1]
+			if os.path.isfile(scriptFileName):
+				self.__printAnswer("running: " + scriptFileName)
+				with open(scriptFileName, "r") as scriptFile:
+					for line in scriptFile:
+						self.__keyboardInputParser(line.strip())
+			else:
+				self.__printAnswer("error: file not found")
+		elif keyboardInput == "exit":
+			self.__printAnswer("goodbye...")
+			self.__running = False
+			time.sleep(0.5)
+		else:
+			self.__comPortHandler.write(keyboardInput + "\r")
 
-    @staticmethod
-    def __printAnswer(answer):
-        print(">>  " + answer)
+	@staticmethod
+	def __printAnswer(answer):
+		print(">>  " + answer)
 
 
 if __name__ == "__main__":
-    os.system("mode 70,15")
-    os.system("title IT client")
-    Client().run()
+	os.system("mode 70,150")
+	os.system("title IT client")
+	Client().run()
