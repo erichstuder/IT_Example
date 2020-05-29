@@ -66,7 +66,7 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 	itCallbacks.byteFromClientAvailable = callbacks.byteFromUartAvailable;
 	itCallbacks.readByteFromClient = callbacks.readByteFromUart;
 	itCallbacks.writeByteToClient = callbacks.writeByteToUart;
-	itCallbacks.getTimestamp = callbacks.getCurrentMillis;
+	itCallbacks.getTimestamp = callbacks.getCurrentMicros;
 	ItParameters_t itParameters;
 	itParameters.itInputBuffer = itInputBuffer;
 	itParameters.itInputBufferSize = sizeof(itInputBuffer);

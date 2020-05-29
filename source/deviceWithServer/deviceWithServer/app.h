@@ -22,7 +22,7 @@
 
 #define APP_SAMPLETIME_US 1000
 
-typedef unsigned long (*GetCurrentMillis_t) (void);
+typedef unsigned long (*GetCurrentMicros_t) (void);
 typedef bool (*ByteFromUartAvailable_t) (void);
 typedef ItError_t (*ReadByteFromUart_t) (char* const data);
 typedef ItError_t (*WriteByteToUart_t) (const unsigned char data);
@@ -31,7 +31,7 @@ typedef struct {
 	ByteFromUartAvailable_t byteFromUartAvailable;
 	ReadByteFromUart_t readByteFromUart;
 	WriteByteToUart_t writeByteToUart;
-	GetCurrentMillis_t getCurrentMillis;
+	GetCurrentMicros_t getCurrentMicros;
 } AppCallbacks_t;
 
 extern void (*appInit)(AppCallbacks_t callbacks);

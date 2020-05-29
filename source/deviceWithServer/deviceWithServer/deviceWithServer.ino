@@ -22,8 +22,11 @@
 //For compatibility with Linux the led pin is defined here.
 static const unsigned char OnBoardLedPin = 13;
 
-static bool timerEvent = false;
-static unsigned long tickMillis = 0;
+static unsigned char outBuffer[1024];
+static unsigned short outBufferIndex = 0;
+
+static bool timerEvent;
+static unsigned long tickMicros = 0;
 
 static inline void setBuiltinLedOn(void);
 static inline void setBuiltinLedOff(void);
@@ -31,9 +34,10 @@ static inline void timerSetup(void);
 static inline bool byteFromUartAvailable(void);
 static inline ItError_t readByteFromUart(char* const data);
 static inline ItError_t writeByteToUart(const unsigned char data);
+static inline void sendBufferToUart(void);
 
-static unsigned long getTickMillis(void){
-	return tickMillis;
+static unsigned long getTickMicros(void){
+	return tickMicros;
 }
 
 void setup(void){
@@ -41,7 +45,7 @@ void setup(void){
 	callbacks.byteFromUartAvailable = byteFromUartAvailable;
 	callbacks.readByteFromUart = readByteFromUart;
 	callbacks.writeByteToUart = writeByteToUart;
-	callbacks.getCurrentMillis = getTickMillis;
+	callbacks.getCurrentMicros = getTickMicros;
 	appInit(callbacks);
 
 	timerSetup();
@@ -49,7 +53,8 @@ void setup(void){
 
 void setup_ForCppUTest(void){
 //The testframework CppUTest uses a function named "setup()" to initialize tests.
-//The solve the problem this wrapper is used.
+//That conflicts with the setup function in here.
+//To solve the problem this wrapper is used.
 	setup();
 }
 
@@ -58,11 +63,10 @@ void loop(void){
 		setBuiltinLedOn();
 		return;
 	}
-	
 	setBuiltinLedOff();
- 
 	timerEvent=false;
 	appTick();
+	sendBufferToUart();
 }
 
 static inline void initBuiltinLed(void){
@@ -104,7 +108,13 @@ static inline void timerSetup(void){
 }
 
 ISR(TIMER1_COMPA_vect){
-	tickMillis += APP_SAMPLETIME_US/1000;
+	if(timerEvent){
+		//indication that somethin went wrong
+		tickMicros += APP_SAMPLETIME_US*10;
+	}
+	else{
+		tickMicros += APP_SAMPLETIME_US;
+	}
 	timerEvent = true;
 }
 
@@ -116,7 +126,6 @@ static inline ItError_t readByteFromUart(char* const data){
 	int incomingByte = Serial.read();
 	if(incomingByte == -1){
 		return ItError_NoDataAvailable;
-		
 	}else{
 		*data = (char)incomingByte;
 	}
@@ -124,8 +133,17 @@ static inline ItError_t readByteFromUart(char* const data){
 }
 
 static inline ItError_t writeByteToUart(const unsigned char data){
-	if(Serial.write(data) != 1){
-		return ItError_ClientWriteError;
+	if(outBufferIndex >= sizeof(outBuffer)){
+		sendBufferToUart();
+		if(outBufferIndex >= sizeof(outBuffer)){
+			return ItError_ClientWriteError;
+		}
 	}
+
+	outBuffer[outBufferIndex++] = data;
 	return ItError_NoError;
+}
+
+static inline void sendBufferToUart(void){
+	outBufferIndex -= Serial.write(outBuffer, outBufferIndex);
 }
