@@ -62,13 +62,13 @@ class TelegramParser:
 
 	@staticmethod
 	def parseStream(data: bytes):
-		telegrams = []
-		TelegramParser.__splitTelegramStream(data, telegrams)
+		telegrams = TelegramParser.__splitTelegramStream(data)
 		TelegramParser.__parse(telegrams)
 		return telegrams
 
 	@staticmethod
-	def __splitTelegramStream(data, telegrams):
+	def __splitTelegramStream(data):
+		telegrams = [];
 		TelegramParser.__startNewTelegram(telegrams)
 		byteOld = 0
 		for byte in data:
@@ -76,6 +76,7 @@ class TelegramParser:
 				TelegramParser.__startNewTelegram(telegrams)
 			telegrams[-1]['raw'] += bytes([byte])
 			byteOld = byte
+		return telegrams
 
 	@staticmethod
 	def __startNewTelegram(telegrams):
@@ -87,26 +88,29 @@ class TelegramParser:
 	@staticmethod
 	def __parse(telegrams):
 		for telegram in telegrams:
-			if telegram['raw'][0] != TelegramParser.__TelegramStartId \
-			   or telegram['raw'][-1] != TelegramParser.__TelegramEndId:
-				telegram['valid'] = False
-				continue
-			telegramRawLocal = telegram['raw']
-			telegramNoReplacementMarkers = TelegramParser.__parseReplacementMarkers(telegramRawLocal)
-			telegramNoStartAndEnd = telegramNoReplacementMarkers[1:-1]
-			telegramNoTelegramType = TelegramParser.__parseTelegramType(telegram, telegramNoStartAndEnd)
-			if telegram['telegramType'] == 'value':
-				telegramNoValueName = TelegramParser.__parseValueName(telegram, telegramNoTelegramType)
-				telegramNoValueType = TelegramParser.__parseValueType(telegram, telegramNoValueName)
-				telegramNoValue = TelegramParser.__parseValue(telegram, telegramNoValueType)
-				telegramEmpty = TelegramParser.__parseTimestamp(telegram, telegramNoValue)
+                        try:
+                                telegramNoStartAndEnd = TelegramParser.__parseStartAndEnd(telegram['raw'])
+                                telegramNoReplacementMarkers = TelegramParser.__parseReplacementMarkers(telegramNoStartAndEnd)
+                                telegramNoTelegramType = TelegramParser.__parseTelegramType(telegram, telegramNoReplacementMarkers)
+                                if telegram['telegramType'] == 'value':
+                                        telegramNoValueName = TelegramParser.__parseValueName(telegram, telegramNoTelegramType)
+                                        telegramNoValueType = TelegramParser.__parseValueType(telegram, telegramNoValueName)
+                                        telegramNoValue = TelegramParser.__parseValue(telegram, telegramNoValueType)
+                                        telegramEmpty = TelegramParser.__parseTimestamp(telegram, telegramNoValue)
+                                elif telegram['telegramType'] == 'string':
+                                        telegramEmpty = TelegramParser.__parseString(telegram, telegramNoTelegramType)
+                                else:
+                                        raise ValueError('unknown telegram type')
 
-			elif telegram['telegramType'] == 'string':
-				telegramEmpty = TelegramParser.__parseString(telegram, telegramNoTelegramType)
-			else:
-				raise ValueError('not implemented')
+                                telegram['valid'] = True
+                        except ValueError:
+                                telegram['valid'] = False
 
-			telegram['valid'] = True
+	@staticmethod
+	def __parseStartAndEnd(telegramStream):
+		if telegramStream[0] != TelegramParser.__TelegramStartId or telegramStream[-1] != TelegramParser.__TelegramEndId:
+			raise ValueError('Parsing Start and End failed')
+		return telegramStream[1:-1]
 
 	@staticmethod
 	def __parseReplacementMarkers(telegramStream):
@@ -121,19 +125,15 @@ class TelegramParser:
 		return telegramStreamWithoutReplacementMarkers
 
 	@staticmethod
-	def __appendToKey(telegram, key, value):
-		if key not in telegram:
-			telegram.update({key: value})
-		else:
-			telegram[key] += value
-
-	@staticmethod
 	def __parseTelegramType(telegram, telegramNoStartAndEnd):
 		telegramTypes = {
 			1: 'value',
 			2: 'string',
 		}
-		telegram['telegramType'] = telegramTypes.get(telegramNoStartAndEnd[0])
+		telegramType = telegramTypes.get(telegramNoStartAndEnd[0])
+		if telegramType == None:
+			raise ValueError('invalid telegram type')
+		telegram['telegramType'] = telegramType
 		return telegramNoStartAndEnd[1:]
 
 	@staticmethod
@@ -146,6 +146,7 @@ class TelegramParser:
 				return telegramNoTelegramType[nameLength+1:]
 			name += chr(byte)
 			nameLength += 1
+		raise ValueError('value name has no terminator')
 
 	@staticmethod
 	def __parseValueType(telegram, telegramNoValueName):
@@ -155,20 +156,31 @@ class TelegramParser:
 			3: 'ulong',
 			4: 'float',
 		}
-		telegram['valueType'] = valueTypes.get(telegramNoValueName[0])
+		if len(telegramNoValueName) == 0:
+			raise ValueError('no value to parse')
+		valueType = valueTypes.get(telegramNoValueName[0])
+		if valueType == None:
+			raise ValueError('invalid value type')
+		telegram['valueType'] = valueType
 		return telegramNoValueName[1:]
 
 	@staticmethod
 	def __parseValue(telegram, telegramNoValueType):
 		if telegram['valueType'] == 'ulong':
+			if len(telegramNoValueType) < 4:
+				raise ValueError('not enough bytes to parse ulong')
 			telegram['value'] = struct.unpack('L', bytes(telegramNoValueType[:4]))[0]
 			return telegramNoValueType[4:]
 		elif telegram['valueType'] == 'float':
+			if len(telegramNoValueType) < 4:
+				raise ValueError('not enough bytes to parse float')
 			telegram['value'] = struct.unpack('f', bytes(telegramNoValueType[:4]))[0]
 			return telegramNoValueType[4:]
 
 	@staticmethod
 	def __parseTimestamp(telegram, telegramNoValue):
+		if len(telegramNoValue) < 4:
+			raise ValueError('not enough bytes to parse timestamp')
 		telegram['timestamp'] = struct.unpack('L', bytes(telegramNoValue[:4]))[0]
 		return telegramNoValue[4:]
 
@@ -182,3 +194,4 @@ class TelegramParser:
 				return telegramNoTelegramType[nameLength + 1:]
 			name += chr(byte)
 			nameLength += 1
+		raise ValueError('string has no terminator')
