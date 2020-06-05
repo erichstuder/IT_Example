@@ -95,6 +95,9 @@ static inline void timerSetup(void){
 	#elif APP_SAMPLETIME_US == 100000
 		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
 		OCR1A = 6250; //100ms
+	#elif APP_SAMPLETIME_US == 10000
+		TCCR1B = _BV(WGM12) | _BV(CS12); //match on value of OCR1A and divide clock by 256
+		OCR1A = 625; //10ms
 	#elif APP_SAMPLETIME_US == 2000
 		TCCR1B = _BV(WGM12) | _BV(CS10); //match on value of OCR1A and divide clock by 1
 		OCR1A = 32000; //2ms
@@ -108,13 +111,7 @@ static inline void timerSetup(void){
 }
 
 ISR(TIMER1_COMPA_vect){
-	if(timerEvent){
-		//indication that somethin went wrong
-		tickMicros += APP_SAMPLETIME_US*10;
-	}
-	else{
-		tickMicros += APP_SAMPLETIME_US;
-	}
+	tickMicros += APP_SAMPLETIME_US;
 	timerEvent = true;
 }
 
