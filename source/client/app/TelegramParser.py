@@ -27,37 +27,40 @@ class TelegramParser:
 
 	@staticmethod
 	def parseLastValidTelegram(data: bytes, valueName):
-		for index in range(len(data)-1, 0, -1):
+		lastDataIndex = len(data)-1
+		endIndex = lastDataIndex
+		for index in range(lastDataIndex, 0, -1):
 			byte = data[index]
 			if byte == TelegramParser.__TelegramEndId:
 				endIndex = index;
 			elif byte == TelegramParser.__TelegramStartId:
 				startIndex = index;
-				telegrams = []
-				TelegramParser.__splitTelegramStream(data[startIndex:endIndex+1], telegrams)
+				telegrams = TelegramParser.__splitTelegramStream(data[startIndex:endIndex+1])
 				TelegramParser.__parse(telegrams)
 				telegram = telegrams[0]
-				if telegram["valueName"] == valueName and telegram["valid"] == True:
+				if telegram["valid"] == True and telegram["valueName"] == valueName:
 					return telegram
 		return None
 
 	@staticmethod
 	def getTelegramsAfterTimestamp(data: bytes, valueName, lowestTimestamp):
 		telegrams = [];
-		for index in range(len(data)-1, 0, -1):
+		lastDataIndex = len(data)-1
+		endIndex = lastDataIndex
+		for index in range(lastDataIndex, 0, -1):
 			byte = data[index]
 			if byte == TelegramParser.__TelegramEndId:
 				endIndex = index;
 			elif byte == TelegramParser.__TelegramStartId:
 				startIndex = index;
-				telegramsTemp = []
-				TelegramParser.__splitTelegramStream(data[startIndex:endIndex+1], telegramsTemp)
+				telegramsTemp = TelegramParser.__splitTelegramStream(data[startIndex:endIndex+1])
 				TelegramParser.__parse(telegramsTemp)
 				telegram = telegramsTemp[0]
-				if telegram["timestamp"] <= lowestTimestamp:
-					return telegrams
-				elif telegram["valueName"] == valueName and telegram["valid"] == True:
-					telegrams.insert(0, telegram)
+				if telegram["valid"] == True:
+					if telegram["timestamp"] <= lowestTimestamp:
+						return telegrams
+					elif telegram["valueName"] == valueName:
+						telegrams.insert(0, telegram)
 		return None
 
 	@staticmethod
