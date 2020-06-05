@@ -72,6 +72,9 @@ class TelegramParser:
 	@staticmethod
 	def __splitTelegramStream(data):
 		telegrams = [];
+		if len(data) == 0:
+			return telegrams
+		
 		TelegramParser.__startNewTelegram(telegrams)
 		byteOld = 0
 		for byte in data:
