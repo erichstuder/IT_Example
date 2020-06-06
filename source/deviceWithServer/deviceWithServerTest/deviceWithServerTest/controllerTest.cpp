@@ -24,30 +24,17 @@ TEST_GROUP(ControllerTest) {
 	}
 
 	void teardown() {
-		controllerReset();
 	}
 };
 
-TEST(ControllerTest, controllerTickExists) {
-	controllerTick();
-}
-
-TEST(ControllerTest, setDesiredValueExists) {
-	setControllerDesiredValue(0.0f);
-}
-
-TEST(ControllerTest, setActualValueExists) {
-	setControllerActualValue(0.0f);
-}
-
 TEST(ControllerTest, hasP) {
-	setControllerDesiredValue(1);
+	setControllerDesiredValue(2);
 	setControllerActualValue(0);
-	setControllerKp(1);
+	setControllerKp(5);
 	setControllerKi(0);
 	LONGS_EQUAL(getControllerSignal(), 0);
 	controllerTick();
-	LONGS_EQUAL(getControllerSignal(), 1);
+	LONGS_EQUAL(getControllerSignal(), 2 * 5);
 }
 
 TEST(ControllerTest, hasI) {
