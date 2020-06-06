@@ -1,6 +1,8 @@
 //test double
 #pragma once
 
+#include "CppUTestExt/MockSupport.h"
+
 #define LED_BUILTIN 13
 
 #define HIGH 0x1
@@ -11,26 +13,28 @@
 #define _BV(bit) (1 << (bit))
 
 typedef unsigned char uint8_t;
-//typedef uint8_t byte;
 
 class HardwareSerial {
 public:
-	bool readCalled;
-	bool writeCalled;
-	int available(void) { return 1; }
-	int read(void) { 
-		readCalled = true;
-		return 42;
+	int available(void) {
+		return 0;
 	}
-	size_t write(uint8_t byte) {
-		writeCalled = true;
-		return 1; 
+
+	int read(void) {
+		return 0;
 	}
-	operator bool() { return true; }
+
+	size_t write(uint8_t *buf, unsigned short len) {
+		mock().actualCall("Serial.write");
+		return 0; 
+	}
+
+	operator bool(void) { 
+		return true;
+	}
 };
 extern HardwareSerial Serial;
 
-extern unsigned long millis(void);
 extern void pinMode(uint8_t pin, uint8_t value);
 extern void digitalWrite(uint8_t, uint8_t);
 
@@ -38,7 +42,6 @@ extern void digitalWrite(uint8_t, uint8_t);
 #define TIMER1_COMPA_vect
 
 #define ISR(x) void timerISR(void)
-extern void timerISR(void); //a bit dirty but it works
 
 extern unsigned char TCCR1A;
 
