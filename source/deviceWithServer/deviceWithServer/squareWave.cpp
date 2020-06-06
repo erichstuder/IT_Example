@@ -25,23 +25,9 @@ static float level2 = 1;
 static unsigned short currentTicks = 0;
 static float* outputSignal = &level1;
 
-static void driveOutputSignal(void);
 static void toggleOutputSignal(void);
 
 void squareWaveTick_Implementation(void) {
-	driveOutputSignal();
-}
-void (*squareWaveTick)(void) = squareWaveTick_Implementation;
-
-void squareWaveReset(void) {
-	frequency = 0;
-	level1 = 0;
-	level2 = 1;
-	currentTicks = 0;
-	outputSignal = &level1;
-}
-
-static void driveOutputSignal(void) {
 	if (frequency == 0 || tickTime == 0) {
 		return;
 	}
@@ -52,6 +38,7 @@ static void driveOutputSignal(void) {
 	}
 	currentTicks++;
 }
+void (*squareWaveTick)(void) = squareWaveTick_Implementation;
 
 static void toggleOutputSignal(void) {
 	if (outputSignal == &level1) {
@@ -60,6 +47,14 @@ static void toggleOutputSignal(void) {
 	else {
 		outputSignal = &level1;
 	}
+}
+
+void squareWaveReset(void) {
+	frequency = 0;
+	level1 = 0;
+	level2 = 1;
+	currentTicks = 0;
+	outputSignal = &level1;
 }
 
 float getSquareWaveSignal_Implementation(void) {

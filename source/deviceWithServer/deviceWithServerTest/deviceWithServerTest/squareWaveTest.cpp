@@ -25,27 +25,14 @@ TEST_GROUP(SquareWaveTest) {
 	}
 
 	void teardown()	{
-		squareWaveReset();
 	}
 };
-
-TEST(SquareWaveTest, squareWaveTickExists) {
-	squareWaveTick();
-}
 
 TEST(SquareWaveTest, initialSignal) {
 	for (int n = 0; n < 1e6; n++) {
 		LONGS_EQUAL(getSquareWaveSignal(), 0);
 		squareWaveTick();
 	}
-}
-
-TEST(SquareWaveTest, setTickTime) {
-	setSquareWaveTickTime(0);
-}
-
-TEST(SquareWaveTest, setSignalFrequency) {
-	setSquareWaveFrequency(0);
 }
 
 TEST(SquareWaveTest, frquency1Hz) {
