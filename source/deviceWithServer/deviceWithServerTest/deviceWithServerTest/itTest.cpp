@@ -161,7 +161,7 @@ TEST(ItTest, appendToBuffer) {
 	LONGS_EQUAL('A', itInputBuffer[1]);
 }
 
-TEST(ItTest, readByteButClientUnavailable) {
+TEST(ItTest, readByteButNoDataAvailable) {
 	char readByteFromClient_buffer[] = { 'b', 'Z' };
 
 	mock().strictOrder();
@@ -174,7 +174,7 @@ TEST(ItTest, readByteButClientUnavailable) {
 	mock().expectOneCall("byteFromClientAvailable").andReturnValue(true);
 	mock().expectOneCall("readByteFromClient")
 		.withOutputParameterReturning("data", &readByteFromClient_buffer[1], sizeof(readByteFromClient_buffer[0]))
-		.andReturnValue((int)ItError_ClientUnavailable);
+		.andReturnValue((int)ItError_NoDataAvailable);
 
 	itTick();
 

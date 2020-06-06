@@ -21,7 +21,6 @@
 typedef enum {
 	ItError_NoError,
 	ItError_BufferFull,
-	ItError_ClientUnavailable,
 	ItError_ClientWriteError,
 	ItError_NoDataAvailable,
 	ItError_InvalidValueType,
