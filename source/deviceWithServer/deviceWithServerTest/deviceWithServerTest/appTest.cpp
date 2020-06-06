@@ -136,15 +136,15 @@ TEST_GROUP(AppTest) {
 };
 
 TEST(AppTest, applicationSampletime) {
-	LONGS_EQUAL(1000000, APP_SAMPLETIME_US);
+	LONGS_EQUAL(1000, APP_SAMPLETIME_US);
 }
 
 TEST(AppTest, appInitSettings) {
 	UT_PTR_SET(setSquareWaveTickTime, setSquareWaveTickTime_Mock);
-	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", 1.0f);
+	mock().expectOneCall("setSquareWaveTickTime_Mock").withParameter("time", float(APP_SAMPLETIME_US / 1e6));
 
 	UT_PTR_SET(setSquareWaveFrequency, setSquareWaveFrequency_Mock);
-	mock().expectOneCall("setSquareWaveFrequency_Mock").withParameter("signalFrequency", 0.05f);
+	mock().expectOneCall("setSquareWaveFrequency_Mock").withParameter("signalFrequency", 0.5f);
 
 	UT_PTR_SET(setSquareWaveLevels, setSquareWaveLevels_Mock);
 	mock().expectOneCall("setSquareWaveLevels_Mock")
@@ -155,7 +155,7 @@ TEST(AppTest, appInitSettings) {
 	mock().expectOneCall("setControllerKp_Mock").withParameter("value", 0.0f);
 
 	UT_PTR_SET(setControllerKi, setControllerKi_Mock);
-	mock().expectOneCall("setControllerKi_Mock").withParameter("value", 1.3f);
+	mock().expectOneCall("setControllerKi_Mock").withParameter("value", 0.05f);
 
 	AppCallbacks_t dummy = { NULL, NULL, NULL, NULL };
 	appInit(dummy);
@@ -195,7 +195,7 @@ TEST(AppTest, appTickFunctionCallOrder) {
 	appTick();
 }
 
-TEST(AppTest, itInitCalled) {
+TEST(AppTest, itInitIsCalled) {
 	UT_PTR_SET(itInit, itInit_Mock);
 	mock().expectOneCall("itInit_Mock");
 	AppCallbacks_t dummy = { NULL, NULL, NULL, NULL };
