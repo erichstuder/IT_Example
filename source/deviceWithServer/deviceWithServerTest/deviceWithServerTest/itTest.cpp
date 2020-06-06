@@ -133,7 +133,7 @@ TEST_GROUP(ItTest_NoMock) {
 	}
 };
 
-TEST(ItTest, byteFromClientAvailable_called) {
+TEST(ItTest, noBytesFromClientAvailable) {
 	mock().expectOneCall("byteFromClientAvailable").andReturnValue(false);
 	itTick();
 }
