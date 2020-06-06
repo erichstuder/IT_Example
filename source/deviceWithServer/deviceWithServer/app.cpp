@@ -69,7 +69,7 @@ void appInit_Implementation(AppCallbacks_t callbacks){
 	itCallbacks.getTimestamp = callbacks.getCurrentMicros;
 	ItParameters_t itParameters;
 	itParameters.itInputBuffer = itInputBuffer;
-	itParameters.itInputBufferSize = sizeof(itInputBuffer);
+	itParameters.itInputBufferSize = sizeof(itInputBuffer)/sizeof(itInputBuffer[0]);
 	itParameters.itSignals = itSignals;
 	itParameters.itSignalCount = ItSignalCount;
 	itInit(&itParameters, &itCallbacks);
