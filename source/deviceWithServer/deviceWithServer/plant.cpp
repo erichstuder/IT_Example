@@ -33,6 +33,6 @@ void setPlantIn_Implementation(float value){
 void (*setPlantIn)(float value) = setPlantIn_Implementation;
 
 float getPlantOut_Implementation(void){
-	return deadTime[DeadTimeLength-1];
+	return deadTime[DeadTimeLength];
 }
 float (*getPlantOut)(void) = getPlantOut_Implementation;

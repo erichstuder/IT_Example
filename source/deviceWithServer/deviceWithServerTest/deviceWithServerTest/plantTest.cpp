@@ -39,7 +39,7 @@ TEST(PlantTest, inputToOutput) {
 
 	setPlantIn(InputValue);
 
-	for (int n = 0; n < ExpectedDelayLength-1; n++) {
+	for (int n = 0; n < ExpectedDelayLength; n++) {
 		LONGS_EQUAL(0, getPlantOut());
 		plantTick();
 	}
