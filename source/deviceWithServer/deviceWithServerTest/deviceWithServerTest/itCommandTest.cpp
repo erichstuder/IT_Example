@@ -118,7 +118,6 @@ static ItSignal_t itSignals[] = {
 
 TEST_GROUP(ItCommandTest) {
     void setup() {
-        mock().strictOrder();
         itCommandInit(itSignals, sizeof(itSignals)/sizeof(itSignals[0]), sendCommandResult);
     }
 
@@ -144,10 +143,12 @@ TEST(ItCommandTest, InvalidGetCommand) {
 }
 
 TEST(ItCommandTest, GetInt8) {
-    mock().expectOneCall("getInt8").andReturnValue(-42);
+    const char Int8Value = -42;
+    mock().expectOneCall("getInt8")
+        .andReturnValue(Int8Value);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "Int8Value")
-        .withParameter("result->resultInt8", -42)
+        .withParameter("result->resultInt8", Int8Value)
         .withParameter("result->valueType", ItValueType_Int8)
         .andReturnValue(ItError_NoError);
     ItError_t err = parseCommand("Int8Value");
@@ -155,10 +156,11 @@ TEST(ItCommandTest, GetInt8) {
 }
 
 TEST(ItCommandTest, GetUint8) {
-    mock().expectOneCall("getUint8").andReturnValue(201);
+    const unsigned char Uint8Value = 201;
+    mock().expectOneCall("getUint8").andReturnValue(Uint8Value);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "desiredValue")
-        .withParameter("result->resultUint8", 201)
+        .withParameter("result->resultUint8", Uint8Value)
         .withParameter("result->valueType", ItValueType_Uint8)
         .andReturnValue(ItError_NoError);
     ItError_t err = parseCommand("desiredValue");
@@ -166,10 +168,11 @@ TEST(ItCommandTest, GetUint8) {
 }
 
 TEST(ItCommandTest, GetUlong) {
-    mock().expectOneCall("getUlong").andReturnValue(1000);
+    const unsigned long UlongValue = 1000;
+    mock().expectOneCall("getUlong").andReturnValue(UlongValue);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "AAA")
-        .withParameter("result->resultUlong", 1000)
+        .withParameter("result->resultUlong", UlongValue)
         .withParameter("result->valueType", ItValueType_Ulong)
         .andReturnValue(ItError_NoError);
     ItError_t err = parseCommand("AAA");
@@ -177,10 +180,11 @@ TEST(ItCommandTest, GetUlong) {
 }
 
 TEST(ItCommandTest, GetFloat) {
-    mock().expectOneCall("getFloat").andReturnValue(63.8f);
+    const float FloatValue = 63.8f;
+    mock().expectOneCall("getFloat").andReturnValue(FloatValue);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "5674")
-        .withParameter("result->resultFloat", 63.8f)
+        .withParameter("result->resultFloat", FloatValue)
         .withParameter("result->valueType", ItValueType_Float)
         .andReturnValue(ItError_NoError);
     ItError_t err = parseCommand("5674");
@@ -202,16 +206,19 @@ TEST(ItCommandTest, logInvalidCommand) {
 }
 
 TEST(ItCommandTest, logSignals) {
-    mock().expectOneCall("getUlong").andReturnValue(1000000);
+    const unsigned long UlongValue = 1000000;
+    mock().expectOneCall("getUlong").andReturnValue(UlongValue);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "AAA")
-        .withParameter("result->resultUlong", 1000000)
+        .withParameter("result->resultUlong", UlongValue)
         .withParameter("result->valueType", ItValueType_Ulong)
         .andReturnValue(ItError_NoError);
-    mock().expectOneCall("getInt8").andReturnValue(-99);
+
+    const char Int8Value = -99;
+    mock().expectOneCall("getInt8").andReturnValue(Int8Value);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "Int8Value")
-        .withParameter("result->resultInt8", -99)
+        .withParameter("result->resultInt8", Int8Value)
         .withParameter("result->valueType", ItValueType_Int8)
         .andReturnValue(ItError_NoError);
 
@@ -224,8 +231,6 @@ TEST(ItCommandTest, logSignals) {
 }
 
 TEST(ItCommandTest, tooManySignalsToLog) {
-    mock().expectNoCall("getFloat");
-    mock().expectNoCall("sendCommandResult");
     ItError_t err;
     for (unsigned char n = 0; n < 10; n++) {
         err = parseCommand("log 5674");
@@ -274,10 +279,11 @@ TEST(ItCommandTest, reset) {
     ItError_t err = parseCommand("log desiredValue");
     LONGS_EQUAL(ItError_NoError, err);
 
-    mock().expectOneCall("getUint8").andReturnValue(77);
+    const unsigned char Uint8Value = 77;
+    mock().expectOneCall("getUint8").andReturnValue(Uint8Value);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "desiredValue")
-        .withParameter("result->resultUint8", 77)
+        .withParameter("result->resultUint8", Uint8Value)
         .withParameter("result->valueType", ItValueType_Uint8)
         .andReturnValue(ItError_NoError);
     logSignals();
@@ -291,17 +297,33 @@ TEST(ItCommandTest, reset) {
 TEST(ItCommandTest, unlog) {
     ItError_t err = parseCommand("log desiredValue");
     LONGS_EQUAL(ItError_NoError, err);
+    err = parseCommand("log AAA");
+    LONGS_EQUAL(ItError_NoError, err);
 
-    mock().expectOneCall("getUint8").andReturnValue(77);
+    const unsigned char Uint8Value = 77;
+    mock().expectOneCall("getUint8").andReturnValue(Uint8Value);
     mock().expectOneCall("sendCommandResult")
         .withParameter("result->name", "desiredValue")
-        .withParameter("result->resultUint8", 77)
+        .withParameter("result->resultUint8", Uint8Value)
         .withParameter("result->valueType", ItValueType_Uint8)
+        .andReturnValue(ItError_NoError);
+    const unsigned long UlongValue = 1000;
+    mock().expectOneCall("getUlong").andReturnValue(UlongValue);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "AAA")
+        .withParameter("result->resultUlong", UlongValue)
+        .withParameter("result->valueType", ItValueType_Ulong)
         .andReturnValue(ItError_NoError);
     logSignals();
 
-    err = parseCommand("unlog desiredValue");
+    err = parseCommand("unlog AAA");
     LONGS_EQUAL(ItError_NoError, err);
 
+    mock().expectOneCall("getUint8").andReturnValue(Uint8Value);
+    mock().expectOneCall("sendCommandResult")
+        .withParameter("result->name", "desiredValue")
+        .withParameter("result->resultUint8", Uint8Value)
+        .withParameter("result->valueType", ItValueType_Uint8)
+        .andReturnValue(ItError_NoError);
     logSignals();
 }
