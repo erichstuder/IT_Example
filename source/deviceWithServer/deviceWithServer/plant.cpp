@@ -17,26 +17,22 @@
 
 #include "plant.h"
 
-static float plantIn = 0;
-static float plantOut = 0;
 static const int DeadTimeLength = 20;
-static float deadTime[DeadTimeLength] = { 0 };
+static float deadTime[DeadTimeLength + 1] = { 0 };
 
 void plantTick_Implementation(void){
-    plantOut = deadTime[DeadTimeLength-1];
-    for (int n = DeadTimeLength-1; n > 0; n--) {
+    for (int n = DeadTimeLength; n > 0; n--) {
         deadTime[n] = deadTime[n - 1];
     }
-    deadTime[0] = plantIn;
 }
 void (*plantTick)(void) = plantTick_Implementation;
 
 void setPlantIn_Implementation(float value){
-	plantIn = value;
+	deadTime[0] = value;
 }
 void (*setPlantIn)(float value) = setPlantIn_Implementation;
 
 float getPlantOut_Implementation(void){
-	return plantOut;
+	return deadTime[DeadTimeLength-1];
 }
 float (*getPlantOut)(void) = getPlantOut_Implementation;

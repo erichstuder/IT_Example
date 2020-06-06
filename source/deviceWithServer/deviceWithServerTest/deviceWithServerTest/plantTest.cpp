@@ -18,8 +18,15 @@
 #include "CppUTest/TestHarness.h"
 #include "plant.h"
 
+static const int ExpectedDelayLength = 20;
+
+static void setPlantDelayQueueToZero(void);
+static void tickThroughTheDelayQueue(void);
+
 TEST_GROUP(PlantTest) {
 	void setup() {
+		setPlantDelayQueueToZero();
+		LONGS_EQUAL(0, getPlantOut());
 	}
 
 	void teardown() {
@@ -28,19 +35,40 @@ TEST_GROUP(PlantTest) {
 
 TEST(PlantTest, inputToOutput) {
 	const float InputValue = 42;
+	const int NumberOfTestValues = ExpectedDelayLength + 10;
+
 	setPlantIn(InputValue);
-	plantTick();
-	LONGS_EQUAL(getPlantOut(), InputValue);
+
+	for (int n = 0; n < ExpectedDelayLength-1; n++) {
+		LONGS_EQUAL(0, getPlantOut());
+		plantTick();
+	}
+
+	for (int n = 0; n < NumberOfTestValues-ExpectedDelayLength; n++) {
+		LONGS_EQUAL(InputValue, getPlantOut());
+		plantTick();
+	}
 }
 
 TEST(PlantTest, inputIsChangeable) {
 	float InputValue = 22222;
 	setPlantIn(InputValue);
-	plantTick();
-	LONGS_EQUAL(getPlantOut(), InputValue);
+	tickThroughTheDelayQueue();
+	LONGS_EQUAL(InputValue, getPlantOut());
 
 	InputValue = -30.932f;
 	setPlantIn(InputValue);
-	plantTick();
-	LONGS_EQUAL(getPlantOut(), InputValue);
+	tickThroughTheDelayQueue();
+	LONGS_EQUAL(InputValue, getPlantOut());
+}
+
+static void setPlantDelayQueueToZero(void) {
+	setPlantIn(0);
+	tickThroughTheDelayQueue();
+}
+
+static void tickThroughTheDelayQueue(void) {
+	for (int n = 0; n < ExpectedDelayLength; n++) {
+		plantTick();
+	}
 }
