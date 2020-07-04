@@ -1,3 +1,0 @@
-[submodule "source/deviceWithServer/deviceWithServer/src/IT-Server"]
-	path = source/deviceWithServer/deviceWithServer/src/IT-Server
-	url = https://github.com/erichstuder/IT-Server.git
