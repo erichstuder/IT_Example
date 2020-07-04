@@ -12,9 +12,9 @@
     <ClCompile Include="..\..\deviceWithServer\app.cpp" />
     <ClCompile Include="..\..\deviceWithServer\deviceWithServer.ino" />
     <ClCompile Include="appTest.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\it.c" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itCommand.c" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itTelegram.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\it.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\itCommand.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\itTelegram.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Arduino.h" />

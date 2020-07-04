@@ -102,7 +102,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(CPPUTEST_HOME)/include;$(CPPUTEST_HOME)/include/Platforms/VisualCpp;$(ProjectDir)..\..\deviceWithServer;$(ProjectDir)..\..\deviceWithServer\src\IT-Server\IT-Server;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CPPUTEST_HOME)/include;$(CPPUTEST_HOME)/include/Platforms/VisualCpp;$(ProjectDir)..\..\deviceWithServer;$(ProjectDir)..\..\deviceWithServer\src\IT_Server\IT_Server;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,9 +147,9 @@
     <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
     <ClCompile Include="..\..\deviceWithServer\plant.cpp" />
     <ClCompile Include="..\..\deviceWithServer\squareWave.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\it.c" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itCommand.c" />
-    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itTelegram.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\it.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\itCommand.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT_Server\IT_Server\itTelegram.c" />
     <ClCompile Include="AllTests.cpp" />
     <ClCompile Include="appTest.cpp" />
     <ClCompile Include="controllerTest.cpp" />
