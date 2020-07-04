@@ -1,6 +1,6 @@
 [submodule "source/deviceWithServer/deviceWithServer/src/IT_Server"]
-	path = source/deviceWithServer/deviceWithServer/src/IT_Server
+	path = deviceWithServer/deviceWithServer/src/IT_Server
 	url = https://github.com/erichstuder/IT_Server.git
 [submodule "source/client/IT_Client"]
-	path = source/client/IT_Client
+	path = client/IT_Client
 	url = https://github.com/erichstuder/IT_Client.git
