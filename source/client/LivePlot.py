@@ -22,7 +22,7 @@ import time
 import os
 import array
 
-from app.TelegramParser import TelegramParser
+from IT_Client.helpers.TelegramParser import TelegramParser
 
 os.system('mode 70,15')
 os.system("title LivePlot")

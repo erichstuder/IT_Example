@@ -1,4 +1,2 @@
-# client (PyCharm project is excluded)
-__pycache__
-*.session
 env
+*.session

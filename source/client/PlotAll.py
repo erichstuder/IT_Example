@@ -25,7 +25,7 @@ import numpy as np
 import time
 import os
 
-from app.TelegramParser import TelegramParser
+from IT_Client.helpers.TelegramParser import TelegramParser
 
 """
 plt.axis([0, 10, 0, 1])
