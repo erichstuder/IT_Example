@@ -22,7 +22,7 @@
 #include "plant.h"
 
 extern "C" {
-#include "it.h"
+#include "src/IT-Server/IT-Server/it.h"
 }
 
 static ItSignal_t itSignals[] = {

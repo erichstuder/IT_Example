@@ -10,14 +10,11 @@
     <ClCompile Include="..\..\deviceWithServer\controller.cpp" />
     <ClCompile Include="deviceWithServerTest.cpp" />
     <ClCompile Include="..\..\deviceWithServer\app.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\it.c" />
-    <ClCompile Include="..\..\deviceWithServer\itCommand.c" />
-    <ClCompile Include="itCommandTest.cpp" />
     <ClCompile Include="..\..\deviceWithServer\deviceWithServer.ino" />
-    <ClCompile Include="itTest.cpp" />
     <ClCompile Include="appTest.cpp" />
-    <ClCompile Include="..\..\deviceWithServer\itTelegram.c" />
-    <ClCompile Include="itTelegramTest.cpp" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\it.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itCommand.c" />
+    <ClCompile Include="..\..\deviceWithServer\src\IT-Server\IT-Server\itTelegram.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Arduino.h" />

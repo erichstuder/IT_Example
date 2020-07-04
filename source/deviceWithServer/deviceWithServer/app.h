@@ -18,7 +18,7 @@
 #ifndef APP_H
 #define APP_H
 
-#include "itError.h"
+#include "src/IT-Server/IT-Server/itError.h"
 
 #define APP_SAMPLETIME_US 1000
 
