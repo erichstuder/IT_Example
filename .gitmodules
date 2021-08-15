@@ -4,3 +4,6 @@
 [submodule "source/client/IT_Client"]
 	path = client/IT_Client
 	url = https://github.com/erichstuder/IT_Client.git
+[submodule "deviceWithServer/lib/IT_Server"]
+	path = deviceWithServer/lib/IT_Server
+	url = https://github.com/erichstuder/IT_Server.git
