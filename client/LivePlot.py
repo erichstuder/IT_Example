@@ -31,9 +31,11 @@ plt.style.use('dark_background')
 
 print("Starting up, may take a few seconds ...")
 
-telegramParser = TelegramParser('mySession.session')
-telegram = telegramParser.getLastValueByName('Ki')
-print(telegram['value'])
+while True:
+	telegramParser = TelegramParser('mySession.session')
+	telegram = telegramParser.getLastValueByName('Ki')
+	print(telegram['value'])
+	time.sleep(2)
 
 
 
