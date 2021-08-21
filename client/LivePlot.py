@@ -24,6 +24,25 @@ import array
 
 from IT_Client.helpers.TelegramParser import TelegramParser
 
+#os.system('mode 70,15')
+#os.system("title LivePlot")
+plt.ion()
+plt.style.use('dark_background')
+
+print("Starting up, may take a few seconds ...")
+
+telegramParser = TelegramParser('mySession.session')
+telegram = telegramParser.getLastValueByName('Ki')
+print(telegram['value'])
+
+
+
+import sys
+sys.exit()
+
+
+
+
 os.system('mode 70,15')
 os.system("title LivePlot")
 plt.ion()
