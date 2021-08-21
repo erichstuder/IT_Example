@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from IT_Client.helpers.TelegramParser import TelegramParser
+from IT_Client.helpers.TelegramHandler import TelegramHandler
 from IT_Client.helpers.TelegramPlotter import TelegramPlotter
 
 #os.system('mode 70,15')
@@ -26,18 +26,18 @@ from IT_Client.helpers.TelegramPlotter import TelegramPlotter
 
 print("Starting up, may take a few seconds ...")
 
-telegramParser = TelegramParser('mySession.session')
+telegramHandler = TelegramHandler('mySession.session')
 plotter = TelegramPlotter()
 plotterFull = TelegramPlotter()
 
 while True:
-	telegram = telegramParser.getLastValue('Ki')
+	telegram = telegramHandler.getLastValue('Ki')
 	if telegram is not None:
 		print(telegram['value'])
 		print('---')
 
-	desiredValue = telegramParser.getLastValues('desiredValue', 10e6)
-	actualValue = telegramParser.getLastValues('actualValue', 10e6)
+	desiredValue = telegramHandler.getLastValues('desiredValue', 10e6)
+	actualValue = telegramHandler.getLastValues('actualValue', 10e6)
 	plotter.plot(desiredValue)
 	plotter.plot(actualValue)
 	plotter.update()
