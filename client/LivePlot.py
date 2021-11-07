@@ -16,19 +16,13 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-
 from IT_Client.helpers.TelegramHandler import TelegramHandler
 from IT_Client.helpers.TelegramPlotter import TelegramPlotter
-
-#os.system('mode 70,15')
-#os.system("title LivePlot")
 
 print("Starting up, may take a few seconds ...")
 
 telegramHandler = TelegramHandler('mySession.session')
-plotter = TelegramPlotter()
-plotterFull = TelegramPlotter()
+plotter = TelegramPlotter('myPlot')
 
 while True:
 	telegram = telegramHandler.getLastValue('Ki')
