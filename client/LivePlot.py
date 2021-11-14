@@ -18,20 +18,40 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from IT_Client.helpers.TelegramHandler import TelegramHandler
 from IT_Client.helpers.TelegramPlotter import TelegramPlotter
+from os import path
+import time
+
+def waitUntilFileExists(filePath):
+	if not path.isfile(filePath):
+		print('waiting for file to exist...')
+	while not path.isfile(filePath):
+		time.sleep(0.5)
+	else:
+		print('file exists now.')
+
 
 print("Starting up, may take a few seconds ...")
 
-telegramHandler = TelegramHandler('mySession.session')
+sessionFile = 'mySession.session'
+waitUntilFileExists(sessionFile)
+
+telegramHandler = TelegramHandler(sessionFile)
 plotter = TelegramPlotter('myPlot')
 
+Ki_old = 'unknown'
 while True:
 	telegram = telegramHandler.getLastValue('Ki')
 	if telegram is not None:
-		print(telegram['value'])
-		print('---')
+		Ki = telegram['value']
+		if Ki != Ki_old:
+			print('Ki: ' + str(Ki))
+			Ki_old = Ki
 
-	desiredValue = telegramHandler.getLastValues('desiredValue', 10e6)
-	actualValue = telegramHandler.getLastValues('actualValue', 10e6)
+	desiredValue = telegramHandler.getLastValues('desiredValue', 5e6)
+	actualValue = telegramHandler.getLastValues('actualValue', 5e6)
 	plotter.plot(desiredValue)
 	plotter.plot(actualValue)
 	plotter.update()
+
+
+
