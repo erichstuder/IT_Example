@@ -1,7 +1,0 @@
-set comport COM2
-set baudrate 9600
-reset
-log Kp
-log Ki
-log desiredValue
-log actualValue
